@@ -1,0 +1,37 @@
+reVX.handlers.geopackage.GPKGMeta
+=================================
+
+.. currentmodule:: reVX.handlers.geopackage
+
+.. autoclass:: GPKGMeta
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~GPKGMeta.feat_ids_for_bbox
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~GPKGMeta.bbox
+      ~GPKGMeta.crs
+      ~GPKGMeta.feat_ids
+      ~GPKGMeta.geom_table_suffix
+      ~GPKGMeta.num_feats
+      ~GPKGMeta.primary_key_column
+      ~GPKGMeta.primary_table
+      ~GPKGMeta.srs_id
+   
+   

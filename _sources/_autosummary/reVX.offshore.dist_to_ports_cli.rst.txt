@@ -1,0 +1,32 @@
+reVX.offshore.dist\_to\_ports\_cli
+==================================
+
+.. automodule:: reVX.offshore.dist_to_ports_cli
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+   
+      eagle
+      get_node_cmd
+      run_local
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

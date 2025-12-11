@@ -1,0 +1,62 @@
+reVX.config.transmission\_layer\_creation.DryCosts
+==================================================
+
+.. currentmodule:: reVX.config.transmission_layer_creation
+
+.. autoclass:: DryCosts
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~DryCosts.construct
+      ~DryCosts.copy
+      ~DryCosts.dict
+      ~DryCosts.from_orm
+      ~DryCosts.json
+      ~DryCosts.model_construct
+      ~DryCosts.model_copy
+      ~DryCosts.model_dump
+      ~DryCosts.model_dump_json
+      ~DryCosts.model_json_schema
+      ~DryCosts.model_parametrized_name
+      ~DryCosts.model_post_init
+      ~DryCosts.model_rebuild
+      ~DryCosts.model_validate
+      ~DryCosts.model_validate_json
+      ~DryCosts.model_validate_strings
+      ~DryCosts.parse_file
+      ~DryCosts.parse_obj
+      ~DryCosts.parse_raw
+      ~DryCosts.schema
+      ~DryCosts.schema_json
+      ~DryCosts.update_forward_refs
+      ~DryCosts.validate
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~DryCosts.model_computed_fields
+      ~DryCosts.model_config
+      ~DryCosts.model_extra
+      ~DryCosts.model_fields
+      ~DryCosts.model_fields_set
+      ~DryCosts.iso_region_tiff
+      ~DryCosts.nlcd_tiff
+      ~DryCosts.slope_tiff
+      ~DryCosts.cost_configs
+      ~DryCosts.default_mults
+      ~DryCosts.extra_tiffs
+   
+   

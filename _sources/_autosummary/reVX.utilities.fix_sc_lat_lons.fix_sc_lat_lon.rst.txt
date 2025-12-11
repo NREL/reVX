@@ -1,0 +1,6 @@
+reVX.utilities.fix\_sc\_lat\_lons.fix\_sc\_lat\_lon
+===================================================
+
+.. currentmodule:: reVX.utilities.fix_sc_lat_lons
+
+.. autofunction:: fix_sc_lat_lon

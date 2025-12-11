@@ -1,0 +1,58 @@
+reVX.config.offshore.DistToPortsConfig
+======================================
+
+.. currentmodule:: reVX.config.offshore
+
+.. autoclass:: DistToPortsConfig
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~DistToPortsConfig.check_files
+      ~DistToPortsConfig.check_overwrite_keys
+      ~DistToPortsConfig.clear
+      ~DistToPortsConfig.copy
+      ~DistToPortsConfig.fromkeys
+      ~DistToPortsConfig.get
+      ~DistToPortsConfig.items
+      ~DistToPortsConfig.keys
+      ~DistToPortsConfig.pop
+      ~DistToPortsConfig.popitem
+      ~DistToPortsConfig.resolve_path
+      ~DistToPortsConfig.set_self_dict
+      ~DistToPortsConfig.setdefault
+      ~DistToPortsConfig.str_replace_and_resolve
+      ~DistToPortsConfig.update
+      ~DistToPortsConfig.values
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~DistToPortsConfig.NAME
+      ~DistToPortsConfig.REQUIREMENTS
+      ~DistToPortsConfig.STR_REP
+      ~DistToPortsConfig.analysis_years
+      ~DistToPortsConfig.config_dir
+      ~DistToPortsConfig.config_keys
+      ~DistToPortsConfig.excl_fpath
+      ~DistToPortsConfig.execution_control
+      ~DistToPortsConfig.input_dist_layer
+      ~DistToPortsConfig.log_directory
+      ~DistToPortsConfig.log_level
+      ~DistToPortsConfig.name
+      ~DistToPortsConfig.ports_fpath
+      ~DistToPortsConfig.replace
+   
+   

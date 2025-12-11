@@ -1,0 +1,6 @@
+reVX.utilities.exceptions.ReedsValueError
+=========================================
+
+.. currentmodule:: reVX.utilities.exceptions
+
+.. autoexception:: ReedsValueError

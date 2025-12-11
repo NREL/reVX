@@ -1,0 +1,6 @@
+reVX.utilities.exceptions.InvalidMCPStartValueError
+===================================================
+
+.. currentmodule:: reVX.utilities.exceptions
+
+.. autoexception:: InvalidMCPStartValueError

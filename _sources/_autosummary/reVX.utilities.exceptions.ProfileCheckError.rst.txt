@@ -1,0 +1,6 @@
+reVX.utilities.exceptions.ProfileCheckError
+===========================================
+
+.. currentmodule:: reVX.utilities.exceptions
+
+.. autoexception:: ProfileCheckError

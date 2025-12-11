@@ -1,0 +1,6 @@
+reVX.utilities.utilities.log\_versions
+======================================
+
+.. currentmodule:: reVX.utilities.utilities
+
+.. autofunction:: log_versions

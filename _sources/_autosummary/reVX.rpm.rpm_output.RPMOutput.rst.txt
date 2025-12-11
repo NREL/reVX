@@ -1,0 +1,38 @@
+reVX.rpm.rpm\_output.RPMOutput
+==============================
+
+.. currentmodule:: reVX.rpm.rpm_output
+
+.. autoclass:: RPMOutput
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~RPMOutput.apply_exclusions
+      ~RPMOutput.apply_trgs
+      ~RPMOutput.export_all
+      ~RPMOutput.extract_profiles
+      ~RPMOutput.make_shape_file
+      ~RPMOutput.process_outputs
+      ~RPMOutput.run_rerank
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~RPMOutput.cluster_summary
+      ~RPMOutput.excl_lat
+      ~RPMOutput.excl_lon
+   
+   

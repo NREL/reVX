@@ -1,0 +1,39 @@
+reVX.utilities.forecasts.FcstUtils
+==================================
+
+.. currentmodule:: reVX.utilities.forecasts
+
+.. autoclass:: FcstUtils
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~FcstUtils.bias_correct
+      ~FcstUtils.bias_correct_fcst
+      ~FcstUtils.blend
+      ~FcstUtils.blend_fcsts
+      ~FcstUtils.compute_mae
+      ~FcstUtils.correct
+      ~FcstUtils.correct_dset
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~FcstUtils.actuals_dset
+      ~FcstUtils.actuals_h5
+      ~FcstUtils.fcst_dset
+      ~FcstUtils.fcst_h5
+   
+   

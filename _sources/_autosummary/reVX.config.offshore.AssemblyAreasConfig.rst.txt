@@ -1,0 +1,57 @@
+reVX.config.offshore.AssemblyAreasConfig
+========================================
+
+.. currentmodule:: reVX.config.offshore
+
+.. autoclass:: AssemblyAreasConfig
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~AssemblyAreasConfig.check_files
+      ~AssemblyAreasConfig.check_overwrite_keys
+      ~AssemblyAreasConfig.clear
+      ~AssemblyAreasConfig.copy
+      ~AssemblyAreasConfig.fromkeys
+      ~AssemblyAreasConfig.get
+      ~AssemblyAreasConfig.items
+      ~AssemblyAreasConfig.keys
+      ~AssemblyAreasConfig.pop
+      ~AssemblyAreasConfig.popitem
+      ~AssemblyAreasConfig.resolve_path
+      ~AssemblyAreasConfig.set_self_dict
+      ~AssemblyAreasConfig.setdefault
+      ~AssemblyAreasConfig.str_replace_and_resolve
+      ~AssemblyAreasConfig.update
+      ~AssemblyAreasConfig.values
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~AssemblyAreasConfig.NAME
+      ~AssemblyAreasConfig.REQUIREMENTS
+      ~AssemblyAreasConfig.STR_REP
+      ~AssemblyAreasConfig.analysis_years
+      ~AssemblyAreasConfig.assembly_areas
+      ~AssemblyAreasConfig.config_dir
+      ~AssemblyAreasConfig.config_keys
+      ~AssemblyAreasConfig.excl_fpath
+      ~AssemblyAreasConfig.execution_control
+      ~AssemblyAreasConfig.log_directory
+      ~AssemblyAreasConfig.log_level
+      ~AssemblyAreasConfig.name
+      ~AssemblyAreasConfig.ports_dset
+   
+   

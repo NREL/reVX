@@ -1,0 +1,1339 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint &mdash; reVX 0.5.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=e1a677a5"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="reVX.wind_dirs.prominent_wind_dirs" href="reVX.wind_dirs.prominent_wind_dirs.html" />
+    <link rel="prev" title="reVX.wind_dirs.mean_wind_dirs_point" href="reVX.wind_dirs.mean_wind_dirs_point.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            reVX
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Home page</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc/installation_usage.html">Installation and Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../misc/installation.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../misc/installation.html#recommended-citation">Recommended Citation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../misc/installation.html#command-line-tools">Command Line Tools</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../misc/examples.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../misc/examples.rpm.html">Resource Planning Model (RPM)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.rpm.html#rev-rpm-cli">reV-RPM CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.rpm.html#rpm-sub-package">RPM sub-package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../misc/examples.setbacks.html">reVX Setbacks</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.setbacks.html#computing-setbacks-for-conus">Computing setbacks for CONUS</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../misc/examples.setbacks.html#ordinance-database">Ordinance database</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../misc/examples.setbacks.html#config-file-setup">Config file setup</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../misc/examples.setbacks.html#execution">Execution</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../misc/examples.setbacks.html#merging">Merging</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.setbacks.html#advanced-topics">Advanced Topics</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../misc/examples.setbacks.html#partial-setbacks">Partial Setbacks</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../misc/examples.setbacks.html#writing-directly-to-hdf5-files">Writing directly to HDF5 files</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../misc/examples.setbacks.html#feature-specific-generic-multipliers">Feature-specific generic multipliers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../misc/examples.setbacks.html#custom-setbacks-computations">Custom setbacks computations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../misc/examples.setbacks.html#batched-execution">Batched execution</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../misc/examples.setbacks.html#job-status">Job Status</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../misc/examples.transmission.html">reVX LCP</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.transmission.html#h5-layer-file-creation">H5 Layer File Creation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.transmission.html#masks">Masks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.transmission.html#layer-creation-configuration-file">Layer Creation Configuration File</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../misc/examples.transmission.html#required-keys">Required Keys</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../misc/examples.transmission.html#optional-keys">Optional Keys</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../misc/examples.transmission.html#action-keys">Action Keys</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.transmission.html#layer-creation-config-file-examples">Layer Creation Config File Examples</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.transmission.html#running-the-layer-creator">Running the Layer Creator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.transmission.html#conus-onshore-example">CONUS (Onshore) Example</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../misc/examples.transmission.html#costs">Costs</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.transmission.html#reinforced-transmission">Reinforced Transmission</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../misc/examples.transmission.html#key-assumptions-under-this-approach">Key assumptions under this approach:</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.transmission.html#substation-connections-only-old">Substation connections only (OLD)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.transmission.html#substation-and-tie-line-connections-new">Substation and tie-line connections (New)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.transmission.html#offshore-least-cost-paths">Offshore Least Cost Paths</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../misc/examples.transmission.html#nomenclature-note">Nomenclature Note</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../misc/examples.transmission.html#offshore-workflow">Offshore Workflow</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../misc/examples.transmission.html#offshore-examples">Offshore Examples</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="reVX.html">API reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="reVX.cli.html">reVX.cli</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reVX.config.html">reVX.config</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="reVX.config.least_cost_xmission.html">reVX.config.least_cost_xmission</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.least_cost_xmission.LeastCostPathsConfig.html">reVX.config.least_cost_xmission.LeastCostPathsConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.least_cost_xmission.LeastCostXmissionConfig.html">reVX.config.least_cost_xmission.LeastCostXmissionConfig</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.config.offshore.html">reVX.config.offshore</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.offshore.AssemblyAreasConfig.html">reVX.config.offshore.AssemblyAreasConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.offshore.DistToPortsConfig.html">reVX.config.offshore.DistToPortsConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.offshore.OffshoreInputsConfig.html">reVX.config.offshore.OffshoreInputsConfig</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.config.reeds.html">reVX.config.reeds</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.reeds.ClassifyConfigGroup.html">reVX.config.reeds.ClassifyConfigGroup</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.reeds.ProfilesConfigGroup.html">reVX.config.reeds.ProfilesConfigGroup</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.reeds.ReedsConfig.html">reVX.config.reeds.ReedsConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.reeds.TimeslicesConfigGroup.html">reVX.config.reeds.TimeslicesConfigGroup</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.config.rpm.html">reVX.config.rpm</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.rpm.ClusterConfigGroup.html">reVX.config.rpm.ClusterConfigGroup</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.rpm.RPMConfig.html">reVX.config.rpm.RPMConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.rpm.RepProfilesConfigGroup.html">reVX.config.rpm.RepProfilesConfigGroup</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.config.transmission_layer_creation.html">reVX.config.transmission_layer_creation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.transmission_layer_creation.LayerBuildComponents.html">reVX.config.transmission_layer_creation.LayerBuildComponents</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.transmission_layer_creation.Layers.html">reVX.config.transmission_layer_creation.Layers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.transmission_layer_creation.DryCosts.html">reVX.config.transmission_layer_creation.DryCosts</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.transmission_layer_creation.LayerBuildConfig.html">reVX.config.transmission_layer_creation.LayerBuildConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.transmission_layer_creation.LayerConfig.html">reVX.config.transmission_layer_creation.LayerConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.transmission_layer_creation.MergeFrictionBarriers.html">reVX.config.transmission_layer_creation.MergeFrictionBarriers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.transmission_layer_creation.RangeConfig.html">reVX.config.transmission_layer_creation.RangeConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.transmission_layer_creation.Rasterize.html">reVX.config.transmission_layer_creation.Rasterize</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.transmission_layer_creation.TransmissionLayerCreationConfig.html">reVX.config.transmission_layer_creation.TransmissionLayerCreationConfig</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.config.turbine_flicker.html">reVX.config.turbine_flicker</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.turbine_flicker.TurbineFlickerConfig.html">reVX.config.turbine_flicker.TurbineFlickerConfig</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.config.wind_dirs.html">reVX.config.wind_dirs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.wind_dirs.MeanWindDirsConfig.html">reVX.config.wind_dirs.MeanWindDirsConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.wind_dirs.ProminentWindDirsConfig.html">reVX.config.wind_dirs.ProminentWindDirsConfig</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="reVX.handlers.html">reVX.handlers</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="reVX.handlers.database.html">reVX.handlers.database</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.handlers.database.Database.html">reVX.handlers.database.Database</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.handlers.geopackage.html">reVX.handlers.geopackage</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.handlers.geopackage.GPKGMeta.html">reVX.handlers.geopackage.GPKGMeta</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.handlers.geotiff.html">reVX.handlers.geotiff</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.handlers.geotiff.Geotiff.html">reVX.handlers.geotiff.Geotiff</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.handlers.layered_h5.html">reVX.handlers.layered_h5</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.handlers.layered_h5.check_geotiff.html">reVX.handlers.layered_h5.check_geotiff</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.handlers.layered_h5.crs_match.html">reVX.handlers.layered_h5.crs_match</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.handlers.layered_h5.LayeredH5.html">reVX.handlers.layered_h5.LayeredH5</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.handlers.layered_h5.LayeredTransmissionH5.html">reVX.handlers.layered_h5.LayeredTransmissionH5</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.handlers.outputs.html">reVX.handlers.outputs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.handlers.outputs.Outputs.html">reVX.handlers.outputs.Outputs</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.handlers.sc_points.html">reVX.handlers.sc_points</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.handlers.sc_points.Point.html">reVX.handlers.sc_points.Point</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.handlers.sc_points.SupplyCurvePoints.html">reVX.handlers.sc_points.SupplyCurvePoints</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="reVX.hybrid_stats.html">reVX.hybrid_stats</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="reVX.hybrid_stats.hybrid_stats.html">reVX.hybrid_stats.hybrid_stats</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.hybrid_stats.hybrid_stats.kendall_tau.html">reVX.hybrid_stats.hybrid_stats.kendall_tau</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.hybrid_stats.hybrid_stats.pearson_correlation.html">reVX.hybrid_stats.hybrid_stats.pearson_correlation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.hybrid_stats.hybrid_stats.spearman_correlation.html">reVX.hybrid_stats.hybrid_stats.spearman_correlation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.hybrid_stats.hybrid_stats.HybridCrossCorrelation.html">reVX.hybrid_stats.hybrid_stats.HybridCrossCorrelation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.hybrid_stats.hybrid_stats.HybridStabilityCoefficient.html">reVX.hybrid_stats.hybrid_stats.HybridStabilityCoefficient</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.hybrid_stats.hybrid_stats.HybridStats.html">reVX.hybrid_stats.hybrid_stats.HybridStats</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.hybrid_stats.temporal_agg.html">reVX.hybrid_stats.temporal_agg</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.hybrid_stats.temporal_agg.get_time_index.html">reVX.hybrid_stats.temporal_agg.get_time_index</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.hybrid_stats.temporal_agg.DatasetAgg.html">reVX.hybrid_stats.temporal_agg.DatasetAgg</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.hybrid_stats.temporal_agg.TemporalAgg.html">reVX.hybrid_stats.temporal_agg.TemporalAgg</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="reVX.least_cost_xmission.html">reVX.least_cost_xmission</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="reVX.least_cost_xmission.config.html">reVX.least_cost_xmission.config</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.least_cost_xmission.config.constants.html">reVX.least_cost_xmission.config.constants</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.least_cost_xmission.config.xmission_config.html">reVX.least_cost_xmission.config.xmission_config</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.least_cost_xmission.layers.html">reVX.least_cost_xmission.layers</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.least_cost_xmission.layers.base.html">reVX.least_cost_xmission.layers.base</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.least_cost_xmission.layers.dry_cost_creator.html">reVX.least_cost_xmission.layers.dry_cost_creator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.least_cost_xmission.layers.layer_creator.html">reVX.least_cost_xmission.layers.layer_creator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.least_cost_xmission.layers.masks.html">reVX.least_cost_xmission.layers.masks</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.least_cost_xmission.layers.utils.html">reVX.least_cost_xmission.layers.utils</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.least_cost_xmission.least_cost_paths.html">reVX.least_cost_xmission.least_cost_paths</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.least_cost_xmission.least_cost_paths.min_reinforcement_costs.html">reVX.least_cost_xmission.least_cost_paths.min_reinforcement_costs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.least_cost_xmission.least_cost_paths.LeastCostPaths.html">reVX.least_cost_xmission.least_cost_paths.LeastCostPaths</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.least_cost_xmission.least_cost_paths.ReinforcementPaths.html">reVX.least_cost_xmission.least_cost_paths.ReinforcementPaths</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.least_cost_xmission.least_cost_paths_cli.html">reVX.least_cost_xmission.least_cost_paths_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.least_cost_xmission.least_cost_paths_cli.eagle.html">reVX.least_cost_xmission.least_cost_paths_cli.eagle</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.least_cost_xmission.least_cost_paths_cli.get_node_cmd.html">reVX.least_cost_xmission.least_cost_paths_cli.get_node_cmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.least_cost_xmission.least_cost_paths_cli.run_local.html">reVX.least_cost_xmission.least_cost_paths_cli.run_local</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.least_cost_xmission.least_cost_xmission.html">reVX.least_cost_xmission.least_cost_xmission</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.least_cost_xmission.least_cost_xmission.region_mapper.html">reVX.least_cost_xmission.least_cost_xmission.region_mapper</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.least_cost_xmission.least_cost_xmission.LeastCostXmission.html">reVX.least_cost_xmission.least_cost_xmission.LeastCostXmission</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.least_cost_xmission.least_cost_xmission.RegionalXmission.html">reVX.least_cost_xmission.least_cost_xmission.RegionalXmission</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.least_cost_xmission.least_cost_xmission_cli.html">reVX.least_cost_xmission.least_cost_xmission_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.least_cost_xmission.least_cost_xmission_cli.eagle.html">reVX.least_cost_xmission.least_cost_xmission_cli.eagle</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.least_cost_xmission.least_cost_xmission_cli.get_node_cmd.html">reVX.least_cost_xmission.least_cost_xmission_cli.get_node_cmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.least_cost_xmission.least_cost_xmission_cli.run_local.html">reVX.least_cost_xmission.least_cost_xmission_cli.run_local</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.least_cost_xmission.trans_cap_costs.html">reVX.least_cost_xmission.trans_cap_costs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.least_cost_xmission.trans_cap_costs.RegionalTransCapCosts.html">reVX.least_cost_xmission.trans_cap_costs.RegionalTransCapCosts</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.least_cost_xmission.trans_cap_costs.ReinforcementLineCosts.html">reVX.least_cost_xmission.trans_cap_costs.ReinforcementLineCosts</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.least_cost_xmission.trans_cap_costs.TieLineCosts.html">reVX.least_cost_xmission.trans_cap_costs.TieLineCosts</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.least_cost_xmission.trans_cap_costs.TransCapCosts.html">reVX.least_cost_xmission.trans_cap_costs.TransCapCosts</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.least_cost_xmission.transmission_layer_creator_cli.html">reVX.least_cost_xmission.transmission_layer_creator_cli</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="reVX.offshore.html">reVX.offshore</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="reVX.offshore.assembly_areas.html">reVX.offshore.assembly_areas</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.offshore.assembly_areas.AssemblyAreas.html">reVX.offshore.assembly_areas.AssemblyAreas</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.offshore.assembly_areas_cli.html">reVX.offshore.assembly_areas_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.offshore.assembly_areas_cli.eagle.html">reVX.offshore.assembly_areas_cli.eagle</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.offshore.assembly_areas_cli.get_node_cmd.html">reVX.offshore.assembly_areas_cli.get_node_cmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.offshore.assembly_areas_cli.run_local.html">reVX.offshore.assembly_areas_cli.run_local</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.offshore.dist_to_ports.html">reVX.offshore.dist_to_ports</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.offshore.dist_to_ports.DistanceToPorts.html">reVX.offshore.dist_to_ports.DistanceToPorts</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.offshore.dist_to_ports_cli.html">reVX.offshore.dist_to_ports_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.offshore.dist_to_ports_cli.eagle.html">reVX.offshore.dist_to_ports_cli.eagle</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.offshore.dist_to_ports_cli.get_node_cmd.html">reVX.offshore.dist_to_ports_cli.get_node_cmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.offshore.dist_to_ports_cli.run_local.html">reVX.offshore.dist_to_ports_cli.run_local</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.offshore.dist_to_ports_converter.html">reVX.offshore.dist_to_ports_converter</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.offshore.dist_to_ports_converter.DistToPortsConverter.html">reVX.offshore.dist_to_ports_converter.DistToPortsConverter</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.offshore.offshore_inputs.html">reVX.offshore.offshore_inputs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.offshore.offshore_inputs.OffshoreInputs.html">reVX.offshore.offshore_inputs.OffshoreInputs</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.offshore.offshore_inputs_cli.html">reVX.offshore.offshore_inputs_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.offshore.offshore_inputs_cli.eagle.html">reVX.offshore.offshore_inputs_cli.eagle</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.offshore.offshore_inputs_cli.get_node_cmd.html">reVX.offshore.offshore_inputs_cli.get_node_cmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.offshore.offshore_inputs_cli.run_local.html">reVX.offshore.offshore_inputs_cli.run_local</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="reVX.plexos.html">reVX.plexos</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="reVX.plexos.base.html">reVX.plexos.base</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.plexos.base.BaseProfileAggregation.html">reVX.plexos.base.BaseProfileAggregation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.plexos.base.PlexosNode.html">reVX.plexos.base.PlexosNode</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.plexos.dpv_plexos.html">reVX.plexos.dpv_plexos</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.plexos.dpv_plexos.DpvPlexosAggregation.html">reVX.plexos.dpv_plexos.DpvPlexosAggregation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.plexos.dpv_plexos.DpvResource.html">reVX.plexos.dpv_plexos.DpvResource</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.plexos.plexos_plants.html">reVX.plexos.plexos_plants</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.plexos.plexos_plants.PlantProfileAggregation.html">reVX.plexos.plexos_plants.PlantProfileAggregation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.plexos.plexos_plants.Plants.html">reVX.plexos.plexos_plants.Plants</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.plexos.plexos_plants.PlexosPlants.html">reVX.plexos.plexos_plants.PlexosPlants</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.plexos.plexos_plants_cli.html">reVX.plexos.plexos_plants_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.plexos.plexos_plants_cli.get_node_cmd.html">reVX.plexos.plexos_plants_cli.get_node_cmd</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.plexos.rev_reeds_plexos.html">reVX.plexos.rev_reeds_plexos</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.plexos.rev_reeds_plexos.PlexosAggregation.html">reVX.plexos.rev_reeds_plexos.PlexosAggregation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.plexos.rev_reeds_plexos.RevReedsPlexosManager.html">reVX.plexos.rev_reeds_plexos.RevReedsPlexosManager</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.plexos.rev_reeds_plexos_cli.html">reVX.plexos.rev_reeds_plexos_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.plexos.rev_reeds_plexos_cli.get_node_cmd.html">reVX.plexos.rev_reeds_plexos_cli.get_node_cmd</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.plexos.simple_plant_builder.html">reVX.plexos.simple_plant_builder</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.plexos.simple_plant_builder.SimplePlantBuilder.html">reVX.plexos.simple_plant_builder.SimplePlantBuilder</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.plexos.simple_plant_builder_cli.html">reVX.plexos.simple_plant_builder_cli</a></li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.plexos.utilities.html">reVX.plexos.utilities</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.plexos.utilities.get_coord_labels.html">reVX.plexos.utilities.get_coord_labels</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.plexos.utilities.parse_table_name.html">reVX.plexos.utilities.parse_table_name</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.plexos.utilities.DataCleaner.html">reVX.plexos.utilities.DataCleaner</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.plexos.utilities.ProjectGidHandler.html">reVX.plexos.utilities.ProjectGidHandler</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="reVX.pras.html">reVX.pras</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="reVX.pras.rev_reeds_pras.html">reVX.pras.rev_reeds_pras</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.pras.rev_reeds_pras.PrasAggregation.html">reVX.pras.rev_reeds_pras.PrasAggregation</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="reVX.red_e.html">reVX.red_e</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="reVX.red_e.tech_potential.html">reVX.red_e.tech_potential</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.red_e.tech_potential.TechPotential.html">reVX.red_e.tech_potential.TechPotential</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="reVX.rpm.html">reVX.rpm</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="reVX.rpm.rpm_cli.html">reVX.rpm.rpm_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.rpm.rpm_cli.eagle.html">reVX.rpm.rpm_cli.eagle</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.rpm.rpm_cli.get_node_cmd.html">reVX.rpm.rpm_cli.get_node_cmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.rpm.rpm_cli.run_local.html">reVX.rpm.rpm_cli.run_local</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.rpm.rpm_clusters.html">reVX.rpm.rpm_clusters</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.rpm.rpm_clusters.RPMClusters.html">reVX.rpm.rpm_clusters.RPMClusters</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.rpm.rpm_clusters.RPMWavelets.html">reVX.rpm.rpm_clusters.RPMWavelets</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.rpm.rpm_manager.html">reVX.rpm.rpm_manager</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.rpm.rpm_manager.RPMClusterManager.html">reVX.rpm.rpm_manager.RPMClusterManager</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.rpm.rpm_output.html">reVX.rpm.rpm_output</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.rpm.rpm_output.RPMOutput.html">reVX.rpm.rpm_output.RPMOutput</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.rpm.rpm_output.RepresentativeProfiles.html">reVX.rpm.rpm_output.RepresentativeProfiles</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="reVX.setbacks.html">reVX.setbacks</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="reVX.setbacks.base.html">reVX.setbacks.base</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.setbacks.base.BUFFERS.html">reVX.setbacks.base.BUFFERS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.setbacks.base.FEATURE_FILTERS.html">reVX.setbacks.base.FEATURE_FILTERS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.setbacks.base.AbstractBaseSetbacks.html">reVX.setbacks.base.AbstractBaseSetbacks</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.setbacks.base.Rasterizer.html">reVX.setbacks.base.Rasterizer</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.setbacks.functions.html">reVX.setbacks.functions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.setbacks.functions.features_clipped_to_county.html">reVX.setbacks.functions.features_clipped_to_county</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.setbacks.functions.features_with_centroid_in_county.html">reVX.setbacks.functions.features_with_centroid_in_county</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.setbacks.functions.parcel_buffer.html">reVX.setbacks.functions.parcel_buffer</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.setbacks.functions.positive_buffer.html">reVX.setbacks.functions.positive_buffer</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.setbacks.regulations.html">reVX.setbacks.regulations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.setbacks.regulations.select_setback_regulations.html">reVX.setbacks.regulations.select_setback_regulations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.setbacks.regulations.validate_setback_regulations_input.html">reVX.setbacks.regulations.validate_setback_regulations_input</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.setbacks.regulations.SetbackRegulations.html">reVX.setbacks.regulations.SetbackRegulations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.setbacks.regulations.WindSetbackRegulations.html">reVX.setbacks.regulations.WindSetbackRegulations</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.setbacks.setbacks.html">reVX.setbacks.setbacks</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.setbacks.setbacks.SETBACK_SPECS.html">reVX.setbacks.setbacks.SETBACK_SPECS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.setbacks.setbacks.setbacks_calculator.html">reVX.setbacks.setbacks.setbacks_calculator</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.setbacks.setbacks_cli.html">reVX.setbacks.setbacks_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.setbacks.setbacks_cli.compute_setbacks.html">reVX.setbacks.setbacks_cli.compute_setbacks</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.setbacks.setbacks_cli.merge_setbacks.html">reVX.setbacks.setbacks_cli.merge_setbacks</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.setbacks.setbacks_cli.preprocess_merge_config.html">reVX.setbacks.setbacks_cli.preprocess_merge_config</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.setbacks.setbacks_cli.preprocess_setbacks_config.html">reVX.setbacks.setbacks_cli.preprocess_setbacks_config</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.setbacks.setbacks_converter.html">reVX.setbacks.setbacks_converter</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.setbacks.setbacks_converter.parse_setbacks.html">reVX.setbacks.setbacks_converter.parse_setbacks</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.setbacks.setbacks_converter.SetbacksConverter.html">reVX.setbacks.setbacks_converter.SetbacksConverter</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="reVX.turbine_flicker.html">reVX.turbine_flicker</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="reVX.turbine_flicker.regulations.html">reVX.turbine_flicker.regulations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.turbine_flicker.regulations.FlickerRegulations.html">reVX.turbine_flicker.regulations.FlickerRegulations</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.turbine_flicker.turbine_flicker.html">reVX.turbine_flicker.turbine_flicker</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.turbine_flicker.turbine_flicker.compute_flicker_exclusions.html">reVX.turbine_flicker.turbine_flicker.compute_flicker_exclusions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.turbine_flicker.turbine_flicker.TurbineFlicker.html">reVX.turbine_flicker.turbine_flicker.TurbineFlicker</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.turbine_flicker.turbine_flicker_cli.html">reVX.turbine_flicker.turbine_flicker_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.turbine_flicker.turbine_flicker_cli.eagle.html">reVX.turbine_flicker.turbine_flicker_cli.eagle</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.turbine_flicker.turbine_flicker_cli.flicker_fn_out.html">reVX.turbine_flicker.turbine_flicker_cli.flicker_fn_out</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.turbine_flicker.turbine_flicker_cli.get_node_cmd.html">reVX.turbine_flicker.turbine_flicker_cli.get_node_cmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.turbine_flicker.turbine_flicker_cli.run_local.html">reVX.turbine_flicker.turbine_flicker_cli.run_local</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="reVX.utilities.html">reVX.utilities</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="reVX.utilities.cluster_methods.html">reVX.utilities.cluster_methods</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.cluster_methods.ClusteringMethods.html">reVX.utilities.cluster_methods.ClusteringMethods</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.utilities.exceptions.html">reVX.utilities.exceptions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.exceptions.GeoTiffKeyError.html">reVX.utilities.exceptions.GeoTiffKeyError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.exceptions.InvalidMCPStartValueError.html">reVX.utilities.exceptions.InvalidMCPStartValueError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.exceptions.LeastCostPathNotFoundError.html">reVX.utilities.exceptions.LeastCostPathNotFoundError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.exceptions.ProfileCheckError.html">reVX.utilities.exceptions.ProfileCheckError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.exceptions.RPMRuntimeError.html">reVX.utilities.exceptions.RPMRuntimeError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.exceptions.RPMTypeError.html">reVX.utilities.exceptions.RPMTypeError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.exceptions.RPMValueError.html">reVX.utilities.exceptions.RPMValueError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.exceptions.ReedsKeyError.html">reVX.utilities.exceptions.ReedsKeyError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.exceptions.ReedsRuntimeError.html">reVX.utilities.exceptions.ReedsRuntimeError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.exceptions.ReedsValueError.html">reVX.utilities.exceptions.ReedsValueError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.exceptions.SupplyCurvePointCapacityError.html">reVX.utilities.exceptions.SupplyCurvePointCapacityError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.exceptions.reVXError.html">reVX.utilities.exceptions.reVXError</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.utilities.exclusions.html">reVX.utilities.exclusions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.exclusions.AbstractBaseExclusionsMerger.html">reVX.utilities.exclusions.AbstractBaseExclusionsMerger</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.exclusions.AbstractExclusionCalculatorInterface.html">reVX.utilities.exclusions.AbstractExclusionCalculatorInterface</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.utilities.fix_sc_lat_lons.html">reVX.utilities.fix_sc_lat_lons</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.fix_sc_lat_lons.fix_sc_lat_lon.html">reVX.utilities.fix_sc_lat_lons.fix_sc_lat_lon</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.utilities.forecasts.html">reVX.utilities.forecasts</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.forecasts.FcstUtils.html">reVX.utilities.forecasts.FcstUtils</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.utilities.output_extractor.html">reVX.utilities.output_extractor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.utilities.rasterize.html">reVX.utilities.rasterize</a></li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.utilities.reeds_cols.html">reVX.utilities.reeds_cols</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.reeds_cols.add_county_info.html">reVX.utilities.reeds_cols.add_county_info</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.reeds_cols.add_extra_data.html">reVX.utilities.reeds_cols.add_extra_data</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.reeds_cols.add_nrel_regions.html">reVX.utilities.reeds_cols.add_nrel_regions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.reeds_cols.add_reeds_columns.html">reVX.utilities.reeds_cols.add_reeds_columns</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.utilities.region_classifier.html">reVX.utilities.region_classifier</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.region_classifier.RegionClassifier.html">reVX.utilities.region_classifier.RegionClassifier</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.utilities.regulations.html">reVX.utilities.regulations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.regulations.AbstractBaseRegulations.html">reVX.utilities.regulations.AbstractBaseRegulations</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.utilities.utilities.html">reVX.utilities.utilities</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.utilities.centered_pixels.html">reVX.utilities.utilities.centered_pixels</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.utilities.coordinate_distance.html">reVX.utilities.utilities.coordinate_distance</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.utilities.load_fips_to_state_map.html">reVX.utilities.utilities.load_fips_to_state_map</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.utilities.log_versions.html">reVX.utilities.utilities.log_versions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.utilities.rev_sc_to_geotiff_arr.html">reVX.utilities.utilities.rev_sc_to_geotiff_arr</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.utilities.to_geo.html">reVX.utilities.utilities.to_geo</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.utilities.transform_pixels_to_lat_lon.html">reVX.utilities.utilities.transform_pixels_to_lat_lon</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="reVX.version.html">reVX.version</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="reVX.wind_dirs.html">reVX.wind_dirs</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="reVX.wind_dirs.mean_wind_dirs.html">reVX.wind_dirs.mean_wind_dirs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.wind_dirs.mean_wind_dirs.MeanWindDirections.html">reVX.wind_dirs.mean_wind_dirs.MeanWindDirections</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.wind_dirs.mean_wind_dirs_cli.html">reVX.wind_dirs.mean_wind_dirs_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.wind_dirs.mean_wind_dirs_cli.eagle.html">reVX.wind_dirs.mean_wind_dirs_cli.eagle</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.wind_dirs.mean_wind_dirs_cli.get_node_cmd.html">reVX.wind_dirs.mean_wind_dirs_cli.get_node_cmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.wind_dirs.mean_wind_dirs_cli.run_local.html">reVX.wind_dirs.mean_wind_dirs_cli.run_local</a></li>
+</ul>
+</li>
+<li class="toctree-l3 current"><a class="reference internal" href="reVX.wind_dirs.mean_wind_dirs_point.html">reVX.wind_dirs.mean_wind_dirs_point</a><ul class="current">
+<li class="toctree-l4 current"><a class="current reference internal" href="#">reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.wind_dirs.prominent_wind_dirs.html">reVX.wind_dirs.prominent_wind_dirs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.wind_dirs.prominent_wind_dirs.ProminentWindDirections.html">reVX.wind_dirs.prominent_wind_dirs.ProminentWindDirections</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.wind_dirs.prominent_wind_dirs_cli.html">reVX.wind_dirs.prominent_wind_dirs_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.wind_dirs.prominent_wind_dirs_cli.eagle.html">reVX.wind_dirs.prominent_wind_dirs_cli.eagle</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.wind_dirs.prominent_wind_dirs_cli.get_node_cmd.html">reVX.wind_dirs.prominent_wind_dirs_cli.get_node_cmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.wind_dirs.prominent_wind_dirs_cli.run_local.html">reVX.wind_dirs.prominent_wind_dirs_cli.run_local</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../_cli/cli.html">CLI reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../_cli/least-cost-paths.html">least-cost-paths</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/least-cost-paths.html#least-cost-paths-add-rr-to-nn">add-rr-to-nn</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/least-cost-paths.html#least-cost-paths-from-config">from-config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/least-cost-paths.html#least-cost-paths-local">local</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/least-cost-paths.html#least-cost-paths-map-ss-to-rr">map-ss-to-rr</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/least-cost-paths.html#least-cost-paths-ss-from-conn">ss-from-conn</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/least-cost-paths.html#least-cost-paths-valid-config-keys">valid-config-keys</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../_cli/least-cost-xmission.html">least-cost-xmission</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/least-cost-xmission.html#least-cost-xmission-from-config">from-config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/least-cost-xmission.html#least-cost-xmission-local">local</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/least-cost-xmission.html#least-cost-xmission-merge-output">merge-output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/least-cost-xmission.html#least-cost-xmission-merge-reinforcement-costs">merge-reinforcement-costs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/least-cost-xmission.html#least-cost-xmission-valid-config-keys">valid-config-keys</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../_cli/mean-wind-dirs.html">mean-wind-dirs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/mean-wind-dirs.html#mean-wind-dirs-from-config">from-config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/mean-wind-dirs.html#mean-wind-dirs-local">local</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/mean-wind-dirs.html#mean-wind-dirs-valid-config-keys">valid-config-keys</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../_cli/offshore-assembly-areas.html">offshore-assembly-areas</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/offshore-assembly-areas.html#offshore-assembly-areas-from-config">from-config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/offshore-assembly-areas.html#offshore-assembly-areas-local">local</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/offshore-assembly-areas.html#offshore-assembly-areas-valid-config-keys">valid-config-keys</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../_cli/offshore-dist-to-ports.html">offshore-dist-to-ports</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/offshore-dist-to-ports.html#offshore-dist-to-ports-from-config">from-config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/offshore-dist-to-ports.html#offshore-dist-to-ports-local">local</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/offshore-dist-to-ports.html#offshore-dist-to-ports-valid-config-keys">valid-config-keys</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../_cli/offshore-inputs.html">offshore-inputs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/offshore-inputs.html#offshore-inputs-from-config">from-config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/offshore-inputs.html#offshore-inputs-local">local</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/offshore-inputs.html#offshore-inputs-valid-config-keys">valid-config-keys</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../_cli/plexos-plants.html">plexos-plants</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/plexos-plants.html#plexos-plants-eagle">eagle</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../_cli/prominent-wind-dirs.html">prominent-wind-dirs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/prominent-wind-dirs.html#prominent-wind-dirs-from-config">from-config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/prominent-wind-dirs.html#prominent-wind-dirs-local">local</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/prominent-wind-dirs.html#prominent-wind-dirs-valid-config-keys">valid-config-keys</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../_cli/reV-plexos.html">reV-plexos</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/reV-plexos.html#rev-plexos-eagle">eagle</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../_cli/reV-rpm.html">reV-rpm</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/reV-rpm.html#rev-rpm-from-config">from-config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/reV-rpm.html#rev-rpm-local">local</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_cli/reV-rpm.html#rev-rpm-local-cluster">cluster</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_cli/reV-rpm.html#rev-rpm-local-rep-profiles">rep-profiles</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/reV-rpm.html#rev-rpm-valid-config-keys">valid-config-keys</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../_cli/reVX.html">reVX</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/reVX.html#revx-add-reeds-cols">add-reeds-cols</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/reVX.html#revx-correct-forecast">correct-forecast</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/reVX.html#revx-exclusions">exclusions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_cli/reVX.html#revx-exclusions-layers-from-h5">layers-from-h5</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_cli/reVX.html#revx-exclusions-layers-to-h5">layers-to-h5</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_cli/reVX.html#revx-exclusions-mask">mask</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/reVX.html#revx-extract-output-year">extract-output-year</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/reVX.html#revx-fix-rev-sc-lat-lon">fix-rev-sc-lat-lon</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/reVX.html#revx-region-classifier">region-classifier</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/reVX.html#revx-rev-sc-to-gpkg">rev-sc-to-gpkg</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/reVX.html#revx-rev-sc-to-tiff">rev-sc-to-tiff</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../_cli/setbacks.html">setbacks</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/setbacks.html#setbacks-batch">batch</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/setbacks.html#setbacks-compute">compute</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/setbacks.html#setbacks-merge">merge</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/setbacks.html#setbacks-pipeline">pipeline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/setbacks.html#setbacks-reset-status">reset-status</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/setbacks.html#setbacks-script">script</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/setbacks.html#setbacks-status">status</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/setbacks.html#setbacks-template-configs">template-configs</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../_cli/simple-plant-builder.html">simple-plant-builder</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../_cli/transmission-layer-creator.html">transmission-layer-creator</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/transmission-layer-creator.html#transmission-layer-creator-convert-pois">convert-pois</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/transmission-layer-creator.html#transmission-layer-creator-create-h5">create-h5</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/transmission-layer-creator.html#transmission-layer-creator-create-masks">create-masks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/transmission-layer-creator.html#transmission-layer-creator-from-config">from-config</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../_cli/turbine-flicker.html">turbine-flicker</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/turbine-flicker.html#turbine-flicker-from-config">from-config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/turbine-flicker.html#turbine-flicker-local">local</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/turbine-flicker.html#turbine-flicker-valid-config-keys">valid-config-keys</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">reVX</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="reVX.html">reVX</a></li>
+          <li class="breadcrumb-item"><a href="reVX.wind_dirs.html">reVX.wind_dirs</a></li>
+          <li class="breadcrumb-item"><a href="reVX.wind_dirs.mean_wind_dirs_point.html">reVX.wind_dirs.mean_wind_dirs_point</a></li>
+      <li class="breadcrumb-item active">reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint</li>
+      <li class="wy-breadcrumbs-aside">
+              <a href="https://github.com/nlr/reVX/blob/main/docs/source/_autosummary/reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.rst" class="fa fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="revx-wind-dirs-mean-wind-dirs-point-meanwinddirectionspoint">
+<h1>reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint<a class="headerlink" href="#revx-wind-dirs-mean-wind-dirs-point-meanwinddirectionspoint" title="Link to this heading"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MeanWindDirectionsPoint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">excl</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">agg_h5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tm_dset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">excl_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inclusion_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">64</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">excl_area</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exclusion_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">close</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gen_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">apply_exclusions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zone_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/wind_dirs/mean_wind_dirs_point.html#MeanWindDirectionsPoint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">AggregationSupplyCurvePoint</span></code></p>
+<p>SC point class to compute mean wind directions</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>gid</strong> (<em>int</em>) – gid for supply curve point to analyze.</p></li>
+<li><p><strong>excl</strong> (<em>str | ExclusionMask</em>) – Filepath to exclusions h5 or ExclusionMask file handler.</p></li>
+<li><p><strong>agg_h5</strong> (<em>str | Resource</em>) – Filepath to .h5 file to aggregate or Resource handler</p></li>
+<li><p><strong>tm_dset</strong> (<em>str</em>) – Dataset name in the exclusions file containing the
+exclusions-to-resource mapping data.</p></li>
+<li><p><strong>excl_dict</strong> (<em>dict | None</em>) – Dictionary of exclusion keyword arugments of the format
+{layer_dset_name: {kwarg: value}} where layer_dset_name is a
+dataset in the exclusion h5 file and kwarg is a keyword argument to
+the reV.supply_curve.exclusions.LayerMask class.
+None if excl input is pre-initialized.</p></li>
+<li><p><strong>inclusion_mask</strong> (<em>np.ndarray</em>) – 2D array pre-extracted inclusion mask where 1 is included and 0 is
+excluded. The shape of this will be checked against the input
+resolution.</p></li>
+<li><p><strong>resolution</strong> (<em>int</em>) – Number of exclusion points per SC point along an axis.
+This number**2 is the total number of exclusion points per
+SC point.</p></li>
+<li><p><strong>excl_area</strong> (<em>float | None, optional</em>) – Area of an exclusion pixel in km2. None will try to infer the area
+from the profile transform attribute in excl_fpath, by default None</p></li>
+<li><p><strong>exclusion_shape</strong> (<em>tuple</em>) – Shape of the full exclusions extent (rows, cols). Inputing this
+will speed things up considerably.</p></li>
+<li><p><strong>close</strong> (<em>bool</em>) – Flag to close object file handlers on exit.</p></li>
+<li><p><strong>gen_index</strong> (<em>np.ndarray</em>) – Array of generation gids with array index equal to resource gid.
+Array value is -1 if the resource index was not used in the
+generation run.</p></li>
+<li><p><strong>apply_exclusions</strong> (<em>bool</em>) – Flag to apply exclusions to the resource / generation gid’s on
+initialization.</p></li>
+<li><p><strong>zone_mask</strong> (<em>np.ndarray | None, optional</em>) – 2D array defining zone within the supply curve to be evaluated,
+where values of 0 or False will be excluded. The shape of this
+array will be checked against the input resolution. If not
+specified, no zone mask will be applied.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Methods</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.agg_data_layers" title="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.agg_data_layers"><code class="xref py py-obj docutils literal notranslate"><span class="pre">agg_data_layers</span></code></a>(summary, data_layers)</p></td>
+<td><p>Perform additional data layer aggregation.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.aggregate" title="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.aggregate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aggregate</span></code></a>(arr)</p></td>
+<td><p>Calc sum (aggregation) of the resource data.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.close" title="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.close"><code class="xref py py-obj docutils literal notranslate"><span class="pre">close</span></code></a>()</p></td>
+<td><p>Close all file handlers.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.exclusion_weighted_mean" title="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.exclusion_weighted_mean"><code class="xref py py-obj docutils literal notranslate"><span class="pre">exclusion_weighted_mean</span></code></a>(arr[, drop_nan])</p></td>
+<td><p>Calc the exclusions-weighted mean value of an array of resource data.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.get_agg_slices" title="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.get_agg_slices"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_agg_slices</span></code></a>(gid, shape, resolution)</p></td>
+<td><p>Get the row, col slices of an aggregation gid.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.mean_wind_dirs" title="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.mean_wind_dirs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mean_wind_dirs</span></code></a>(dset)</p></td>
+<td><p>Calc the mean wind directions at every time-step</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.run" title="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.run"><code class="xref py py-obj docutils literal notranslate"><span class="pre">run</span></code></a>(gid, excl, agg_h5, tm_dset, *wind_dir_dsets)</p></td>
+<td><p>Compute exclusions weight mean for the sc point from data</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.sc_mean" title="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.sc_mean"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sc_mean</span></code></a>(gid, excl, tm_dset, data[, ...])</p></td>
+<td><p>Compute exclusions weight mean for the sc point from data</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.sc_sum" title="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.sc_sum"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sc_sum</span></code></a>(gid, excl, tm_dset, data[, ...])</p></td>
+<td><p>Compute the aggregate (sum) of data for the sc point</p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Attributes</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.area" title="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.area"><code class="xref py py-obj docutils literal notranslate"><span class="pre">area</span></code></a></p></td>
+<td><p>Get the non-excluded resource area of the supply curve point in the current resource class.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.bool_mask" title="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.bool_mask"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bool_mask</span></code></a></p></td>
+<td><p>Get a boolean inclusion mask (True if excl point is not excluded).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.centroid" title="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.centroid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">centroid</span></code></a></p></td>
+<td><p>Get the supply curve point centroid coordinate.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.cols" title="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.cols"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cols</span></code></a></p></td>
+<td><p>Get the cols of the exclusions layer associated with this SC point.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.country" title="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.country"><code class="xref py py-obj docutils literal notranslate"><span class="pre">country</span></code></a></p></td>
+<td><p>Get the SC point country based on the resource meta data.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.county" title="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.county"><code class="xref py py-obj docutils literal notranslate"><span class="pre">county</span></code></a></p></td>
+<td><p>Get the SC point county based on the resource meta data.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.elevation" title="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.elevation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">elevation</span></code></a></p></td>
+<td><p>Get the SC point elevation based on the resource meta data.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.exclusions" title="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.exclusions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">exclusions</span></code></a></p></td>
+<td><p>Get the exclusions object.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.gid" title="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.gid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gid</span></code></a></p></td>
+<td><p>Supply curve point gid</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.gid_counts" title="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.gid_counts"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gid_counts</span></code></a></p></td>
+<td><p>Get the sum of the inclusion values in each resource/generation gid corresponding to this sc point.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.h5" title="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.h5"><code class="xref py py-obj docutils literal notranslate"><span class="pre">h5</span></code></a></p></td>
+<td><p>h5 Resource handler object</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.h5_gid_set" title="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.h5_gid_set"><code class="xref py py-obj docutils literal notranslate"><span class="pre">h5_gid_set</span></code></a></p></td>
+<td><p>Get list of unique h5 gids corresponding to this sc point.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.include_mask" title="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.include_mask"><code class="xref py py-obj docutils literal notranslate"><span class="pre">include_mask</span></code></a></p></td>
+<td><p>[0, 1] where 1 is included and 0 is excluded).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.include_mask_flat" title="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.include_mask_flat"><code class="xref py py-obj docutils literal notranslate"><span class="pre">include_mask_flat</span></code></a></p></td>
+<td><p>Get the flattened inclusion mask (normalized with expected range: [0, 1] where 1 is included and 0 is excluded).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.latitude" title="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.latitude"><code class="xref py py-obj docutils literal notranslate"><span class="pre">latitude</span></code></a></p></td>
+<td><p>Get the SC point latitude</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.longitude" title="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.longitude"><code class="xref py py-obj docutils literal notranslate"><span class="pre">longitude</span></code></a></p></td>
+<td><p>Get the SC point longitude</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.n_gids" title="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.n_gids"><code class="xref py py-obj docutils literal notranslate"><span class="pre">n_gids</span></code></a></p></td>
+<td><p>Get the total number of not fully excluded pixels associated with the available resource/generation gids at the given sc gid.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.offshore" title="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.offshore"><code class="xref py py-obj docutils literal notranslate"><span class="pre">offshore</span></code></a></p></td>
+<td><p>Get the SC point offshore flag based on the resource meta data (if offshore column is present).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.pixel_area" title="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.pixel_area"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pixel_area</span></code></a></p></td>
+<td><p>The area in km2 of a single exclusion pixel.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.resolution" title="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.resolution"><code class="xref py py-obj docutils literal notranslate"><span class="pre">resolution</span></code></a></p></td>
+<td><p>Get the supply curve grid aggregation resolution</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.rows" title="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.rows"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rows</span></code></a></p></td>
+<td><p>Get the rows of the exclusions layer associated with this SC point.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.sc_col_ind" title="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.sc_col_ind"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sc_col_ind</span></code></a></p></td>
+<td><p>Supply curve column index</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.sc_point_gid" title="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.sc_point_gid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sc_point_gid</span></code></a></p></td>
+<td><p>Supply curve point gid</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.sc_row_ind" title="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.sc_row_ind"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sc_row_ind</span></code></a></p></td>
+<td><p>Supply curve row index</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.state" title="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.state"><code class="xref py py-obj docutils literal notranslate"><span class="pre">state</span></code></a></p></td>
+<td><p>Get the SC point state based on the resource meta data.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.summary" title="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.summary"><code class="xref py py-obj docutils literal notranslate"><span class="pre">summary</span></code></a></p></td>
+<td><p>Supply curve point's meta data summary</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.timezone" title="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.timezone"><code class="xref py py-obj docutils literal notranslate"><span class="pre">timezone</span></code></a></p></td>
+<td><p>Get the SC point timezone based on the resource meta data.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.zone_mask" title="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.zone_mask"><code class="xref py py-obj docutils literal notranslate"><span class="pre">zone_mask</span></code></a></p></td>
+<td><p>Get the 2D zone mask, where 1 is included and 0 is excluded.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py property">
+<dt class="sig sig-object py" id="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.h5">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">h5</span></span><a class="headerlink" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.h5" title="Link to this definition"></a></dt>
+<dd><p>h5 Resource handler object</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>_h5</strong> (<em>Resource</em>) – Resource h5 handler object.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.mean_wind_dirs">
+<span class="sig-name descname"><span class="pre">mean_wind_dirs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dset</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/wind_dirs/mean_wind_dirs_point.html#MeanWindDirectionsPoint.mean_wind_dirs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.mean_wind_dirs" title="Link to this definition"></a></dt>
+<dd><p>Calc the mean wind directions at every time-step</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>dset</strong> (<em>str</em>) – Wind direction dataset to aggregate</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>mean_wind_dirs</strong> (<em>np.ndarray | float</em>) – Mean wind direction masked by the binary exclusions</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.run">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">excl</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">agg_h5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tm_dset</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">wind_dir_dsets</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">excl_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inclusion_mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">64</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">excl_area</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0081</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exclusion_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">close</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gen_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/wind_dirs/mean_wind_dirs_point.html#MeanWindDirectionsPoint.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.run" title="Link to this definition"></a></dt>
+<dd><p>Compute exclusions weight mean for the sc point from data</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>gid</strong> (<em>int</em>) – gid for supply curve point to analyze.</p></li>
+<li><p><strong>excl</strong> (<em>str | ExclusionMask</em>) – Filepath to exclusions h5 or ExclusionMask file handler.</p></li>
+<li><p><strong>agg_h5</strong> (<em>str | Resource</em>) – Filepath to .h5 file to aggregate or Resource handler</p></li>
+<li><p><strong>tm_dset</strong> (<em>str</em>) – Dataset name in the exclusions file containing the
+exclusions-to-resource mapping data.</p></li>
+<li><p><strong>wind_dir_dsets</strong> (<em>str</em>) – Wind direction dataset(s) to aggregate, can supply multiple
+datasets</p></li>
+<li><p><strong>excl_dict</strong> (<em>dict | None</em>) – Dictionary of exclusion LayerMask arugments {layer: {kwarg: value}}
+None if excl input is pre-initialized.</p></li>
+<li><p><strong>inclusion_mask</strong> (<em>np.ndarray</em>) – 2D array pre-extracted inclusion mask where 1 is included and 0 is
+excluded. The shape of this will be checked against the input
+resolution.</p></li>
+<li><p><strong>resolution</strong> (<em>int</em>) – Number of exclusion points per SC point along an axis.
+This number**2 is the total number of exclusion points per
+SC point.</p></li>
+<li><p><strong>excl_area</strong> (<em>float</em>) – Area of an exclusion cell (square km).</p></li>
+<li><p><strong>exclusion_shape</strong> (<em>tuple</em>) – Shape of the full exclusions extent (rows, cols). Inputing this
+will speed things up considerably.</p></li>
+<li><p><strong>close</strong> (<em>bool</em>) – Flag to close object file handlers on exit.</p></li>
+<li><p><strong>gen_index</strong> (<em>np.ndarray</em>) – Array of generation gids with array index equal to resource gid.
+Array value is -1 if the resource index was not used in the
+generation run.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>out</strong> (<em>dict</em>) – Wind direction(s) and meta data aggregated to given supply curve
+point gid</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.agg_data_layers">
+<span class="sig-name descname"><span class="pre">agg_data_layers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">summary</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_layers</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.agg_data_layers" title="Link to this definition"></a></dt>
+<dd><p>Perform additional data layer aggregation. If there is no valid data
+in the included area, the data layer will be taken from the full SC
+point extent (ignoring exclusions). If there is still no valid data,
+a warning will be raised and the data layer will have a NaN/None value.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>summary</strong> (<em>dict</em>) – Dictionary of summary outputs for this sc point.</p></li>
+<li><p><strong>data_layers</strong> (<em>None | dict</em>) – Aggregation data layers. Must be a dictionary keyed by data label
+name. Each value must be another dictionary with “dset”, “method”,
+and “fpath”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>summary</strong> (<em>dict</em>) – Dictionary of summary outputs for this sc point. A new entry for
+each data layer is added.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.aggregate">
+<span class="sig-name descname"><span class="pre">aggregate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arr</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.aggregate" title="Link to this definition"></a></dt>
+<dd><p>Calc sum (aggregation) of the resource data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>arr</strong> (<em>np.ndarray</em>) – Array of resource data.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>agg</strong> (<em>float</em>) – Sum of arr masked by the binary exclusions</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.area">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">area</span></span><a class="headerlink" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.area" title="Link to this definition"></a></dt>
+<dd><p>Get the non-excluded resource area of the supply curve point in the
+current resource class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>area</strong> (<em>float</em>) – Non-excluded resource/generation area in square km.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.bool_mask">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">bool_mask</span></span><a class="headerlink" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.bool_mask" title="Link to this definition"></a></dt>
+<dd><p>Get a boolean inclusion mask (True if excl point is not excluded).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>mask</strong> (<em>np.ndarray</em>) – Mask with length equal to the flattened exclusion shape</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.centroid">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">centroid</span></span><a class="headerlink" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.centroid" title="Link to this definition"></a></dt>
+<dd><p>Get the supply curve point centroid coordinate.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>centroid</strong> (<em>tuple</em>) – SC point centroid (lat, lon).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.close">
+<span class="sig-name descname"><span class="pre">close</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.close" title="Link to this definition"></a></dt>
+<dd><p>Close all file handlers.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.cols">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">cols</span></span><a class="headerlink" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.cols" title="Link to this definition"></a></dt>
+<dd><p>Get the cols of the exclusions layer associated with this SC point.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cols</strong> (<em>slice</em>) – Column slice to index the high-res layer (exclusions layer) for the
+gid in the agg layer (supply curve layer).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.country">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">country</span></span><a class="headerlink" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.country" title="Link to this definition"></a></dt>
+<dd><p>Get the SC point country based on the resource meta data.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.county">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">county</span></span><a class="headerlink" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.county" title="Link to this definition"></a></dt>
+<dd><p>Get the SC point county based on the resource meta data.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.elevation">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">elevation</span></span><a class="headerlink" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.elevation" title="Link to this definition"></a></dt>
+<dd><p>Get the SC point elevation based on the resource meta data.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.exclusion_weighted_mean">
+<span class="sig-name descname"><span class="pre">exclusion_weighted_mean</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">drop_nan</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.exclusion_weighted_mean" title="Link to this definition"></a></dt>
+<dd><p>Calc the exclusions-weighted mean value of an array of resource data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>arr</strong> (<em>np.ndarray</em>) – Array of resource data.</p></li>
+<li><p><strong>drop_nan</strong> (<em>bool</em>) – Flag to drop nan values from the mean calculation (only works for
+1D arr input, profiles should not have NaN’s)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>mean</strong> (<em>float | np.ndarray</em>) – Mean of arr masked by the binary exclusions then weighted by
+the non-zero exclusions. This will be a 1D numpy array if the
+input data is a 2D numpy array (averaged along axis=1)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.exclusions">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">exclusions</span></span><a class="headerlink" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.exclusions" title="Link to this definition"></a></dt>
+<dd><p>Get the exclusions object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>_excls</strong> (<em>ExclusionMask</em>) – ExclusionMask h5 handler object.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.get_agg_slices">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_agg_slices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.get_agg_slices" title="Link to this definition"></a></dt>
+<dd><p>Get the row, col slices of an aggregation gid.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>gid</strong> (<em>int</em>) – Gid of interest in the aggregated layer.</p></li>
+<li><p><strong>shape</strong> (<em>tuple</em>) – (row, col) shape tuple of the underlying high-res layer.</p></li>
+<li><p><strong>resolution</strong> (<em>int</em>) – Resolution of the aggregation: number of pixels in 1D being
+aggregated.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>row_slice</strong> (<em>slice</em>) – Row slice to index the high-res layer for the gid in the agg layer.</p></li>
+<li><p><strong>col_slice</strong> (<em>slice</em>) – Col slice to index the high-res layer for the gid in the agg layer.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.gid">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">gid</span></span><a class="headerlink" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.gid" title="Link to this definition"></a></dt>
+<dd><p>Supply curve point gid</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.gid_counts">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">gid_counts</span></span><a class="headerlink" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.gid_counts" title="Link to this definition"></a></dt>
+<dd><p>Get the sum of the inclusion values in each resource/generation gid
+corresponding to this sc point. The sum of the gid counts can be less
+than the value provided by n_gids if fractional exclusion/inclusions
+are provided.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>gid_counts</strong> (<em>list</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.h5_gid_set">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">h5_gid_set</span></span><a class="headerlink" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.h5_gid_set" title="Link to this definition"></a></dt>
+<dd><p>Get list of unique h5 gids corresponding to this sc point.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>h5_gids</strong> (<em>list</em>) – List of h5 gids.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.include_mask">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">include_mask</span></span><a class="headerlink" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.include_mask" title="Link to this definition"></a></dt>
+<dd><p>[0, 1]
+where 1 is included and 0 is excluded).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>np.ndarray</em></p>
+</dd>
+<dt class="field-even">Type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Get the 2D inclusion mask (normalized with expected range</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.include_mask_flat">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">include_mask_flat</span></span><a class="headerlink" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.include_mask_flat" title="Link to this definition"></a></dt>
+<dd><p>Get the flattened inclusion mask (normalized with expected
+range: [0, 1] where 1 is included and 0 is excluded).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>np.ndarray</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.latitude">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">latitude</span></span><a class="headerlink" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.latitude" title="Link to this definition"></a></dt>
+<dd><p>Get the SC point latitude</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.longitude">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">longitude</span></span><a class="headerlink" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.longitude" title="Link to this definition"></a></dt>
+<dd><p>Get the SC point longitude</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.n_gids">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">n_gids</span></span><a class="headerlink" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.n_gids" title="Link to this definition"></a></dt>
+<dd><p>Get the total number of not fully excluded pixels associated with the
+available resource/generation gids at the given sc gid.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>n_gids</strong> (<em>list</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.offshore">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">offshore</span></span><a class="headerlink" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.offshore" title="Link to this definition"></a></dt>
+<dd><p>Get the SC point offshore flag based on the resource meta data
+(if offshore column is present).</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.pixel_area">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">pixel_area</span></span><a class="headerlink" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.pixel_area" title="Link to this definition"></a></dt>
+<dd><p>The area in km2 of a single exclusion pixel. If this value was not
+provided on initialization, it is determined from the profile of the
+exclusion file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>float</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.resolution">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">resolution</span></span><a class="headerlink" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.resolution" title="Link to this definition"></a></dt>
+<dd><p>Get the supply curve grid aggregation resolution</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.rows">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">rows</span></span><a class="headerlink" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.rows" title="Link to this definition"></a></dt>
+<dd><p>Get the rows of the exclusions layer associated with this SC point.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>rows</strong> (<em>slice</em>) – Row slice to index the high-res layer (exclusions layer) for the
+gid in the agg layer (supply curve layer).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.sc_col_ind">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">sc_col_ind</span></span><a class="headerlink" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.sc_col_ind" title="Link to this definition"></a></dt>
+<dd><p>Supply curve column index</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)">int</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.sc_mean">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">sc_mean</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">excl</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tm_dset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">excl_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">64</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exclusion_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">close</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.sc_mean" title="Link to this definition"></a></dt>
+<dd><p>Compute exclusions weight mean for the sc point from data</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>gid</strong> (<em>int</em>) – gid for supply curve point to analyze.</p></li>
+<li><p><strong>excl</strong> (<em>str | ExclusionMask</em>) – Filepath to exclusions h5 or ExclusionMask file handler.</p></li>
+<li><p><strong>tm_dset</strong> (<em>str</em>) – Dataset name in the exclusions file containing the
+exclusions-to-resource mapping data.</p></li>
+<li><p><strong>data</strong> (<em>ndarray | ResourceDataset</em>) – Array of data or open dataset handler to apply exclusions too</p></li>
+<li><p><strong>excl_dict</strong> (<em>dict | None</em>) – Dictionary of exclusion keyword arugments of the format
+{layer_dset_name: {kwarg: value}} where layer_dset_name is a
+dataset in the exclusion h5 file and kwarg is a keyword argument to
+the reV.supply_curve.exclusions.LayerMask class.
+None if excl input is pre-initialized.</p></li>
+<li><p><strong>resolution</strong> (<em>int</em>) – Number of exclusion points per SC point along an axis.
+This number**2 is the total number of exclusion points per
+SC point.</p></li>
+<li><p><strong>exclusion_shape</strong> (<em>tuple</em>) – Shape of the full exclusions extent (rows, cols). Inputing this
+will speed things up considerably.</p></li>
+<li><p><strong>close</strong> (<em>bool</em>) – Flag to close object file handlers on exit</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>ndarray</em> – Exclusions weighted means of data for supply curve point</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.sc_point_gid">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">sc_point_gid</span></span><a class="headerlink" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.sc_point_gid" title="Link to this definition"></a></dt>
+<dd><p>Supply curve point gid</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>int</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.sc_row_ind">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">sc_row_ind</span></span><a class="headerlink" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.sc_row_ind" title="Link to this definition"></a></dt>
+<dd><p>Supply curve row index</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)">int</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.sc_sum">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">sc_sum</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">excl</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tm_dset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">excl_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">64</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exclusion_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">close</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.sc_sum" title="Link to this definition"></a></dt>
+<dd><p>Compute the aggregate (sum) of data for the sc point</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>gid</strong> (<em>int</em>) – gid for supply curve point to analyze.</p></li>
+<li><p><strong>excl</strong> (<em>str | ExclusionMask</em>) – Filepath to exclusions h5 or ExclusionMask file handler.</p></li>
+<li><p><strong>tm_dset</strong> (<em>str</em>) – Dataset name in the exclusions file containing the
+exclusions-to-resource mapping data.</p></li>
+<li><p><strong>data</strong> (<em>ndarray | ResourceDataset</em>) – Array of data or open dataset handler to apply exclusions too</p></li>
+<li><p><strong>excl_dict</strong> (<em>dict | None</em>) – Dictionary of exclusion keyword arugments of the format
+{layer_dset_name: {kwarg: value}} where layer_dset_name is a
+dataset in the exclusion h5 file and kwarg is a keyword argument to
+the reV.supply_curve.exclusions.LayerMask class.
+None if excl input is pre-initialized.</p></li>
+<li><p><strong>resolution</strong> (<em>int</em>) – Number of exclusion points per SC point along an axis.
+This number**2 is the total number of exclusion points per
+SC point.</p></li>
+<li><p><strong>exclusion_shape</strong> (<em>tuple</em>) – Shape of the full exclusions extent (rows, cols). Inputing this
+will speed things up considerably.</p></li>
+<li><p><strong>close</strong> (<em>bool</em>) – Flag to close object file handlers on exit.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>ndarray</em> – Sum / aggregation of data for supply curve point</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.state">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">state</span></span><a class="headerlink" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.state" title="Link to this definition"></a></dt>
+<dd><p>Get the SC point state based on the resource meta data.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.summary">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">summary</span></span><a class="headerlink" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.summary" title="Link to this definition"></a></dt>
+<dd><p>Supply curve point’s meta data summary</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>pandas.Series</em> – List of supply curve point’s meta data</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.timezone">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">timezone</span></span><a class="headerlink" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.timezone" title="Link to this definition"></a></dt>
+<dd><p>Get the SC point timezone based on the resource meta data.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.zone_mask">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">zone_mask</span></span><a class="headerlink" href="#reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.zone_mask" title="Link to this definition"></a></dt>
+<dd><p>Get the 2D zone mask, where 1 is included and 0 is excluded.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>np.ndarray</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="reVX.wind_dirs.mean_wind_dirs_point.html" class="btn btn-neutral float-left" title="reVX.wind_dirs.mean_wind_dirs_point" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="reVX.wind_dirs.prominent_wind_dirs.html" class="btn btn-neutral float-right" title="reVX.wind_dirs.prominent_wind_dirs" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, Alliance for Sustainable Energy, LLC.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

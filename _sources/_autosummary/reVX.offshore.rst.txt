@@ -1,0 +1,36 @@
+reVX.offshore
+=============
+
+.. automodule:: reVX.offshore
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   assembly_areas
+   assembly_areas_cli
+   dist_to_ports
+   dist_to_ports_cli
+   dist_to_ports_converter
+   offshore_inputs
+   offshore_inputs_cli
+

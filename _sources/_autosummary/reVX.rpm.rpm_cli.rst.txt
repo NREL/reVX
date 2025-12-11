@@ -1,0 +1,32 @@
+reVX.rpm.rpm\_cli
+=================
+
+.. automodule:: reVX.rpm.rpm_cli
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+   
+      eagle
+      get_node_cmd
+      run_local
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

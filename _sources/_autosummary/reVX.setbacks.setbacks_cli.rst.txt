@@ -1,0 +1,33 @@
+reVX.setbacks.setbacks\_cli
+===========================
+
+.. automodule:: reVX.setbacks.setbacks_cli
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+   
+      compute_setbacks
+      merge_setbacks
+      preprocess_merge_config
+      preprocess_setbacks_config
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

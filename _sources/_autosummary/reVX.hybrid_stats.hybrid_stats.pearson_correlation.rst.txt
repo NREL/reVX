@@ -1,0 +1,6 @@
+reVX.hybrid\_stats.hybrid\_stats.pearson\_correlation
+=====================================================
+
+.. currentmodule:: reVX.hybrid_stats.hybrid_stats
+
+.. autofunction:: pearson_correlation

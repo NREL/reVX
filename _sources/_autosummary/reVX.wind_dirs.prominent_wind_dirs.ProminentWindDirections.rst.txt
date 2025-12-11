@@ -1,0 +1,37 @@
+reVX.wind\_dirs.prominent\_wind\_dirs.ProminentWindDirections
+=============================================================
+
+.. currentmodule:: reVX.wind_dirs.prominent_wind_dirs
+
+.. autoclass:: ProminentWindDirections
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ProminentWindDirections.aggregate
+      ~ProminentWindDirections.prominent_directions
+      ~ProminentWindDirections.run
+      ~ProminentWindDirections.run_parallel
+      ~ProminentWindDirections.run_serial
+      ~ProminentWindDirections.save_agg_to_h5
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~ProminentWindDirections.DIR_ORDER
+      ~ProminentWindDirections.gids
+      ~ProminentWindDirections.shape
+   
+   

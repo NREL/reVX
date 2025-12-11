@@ -1,0 +1,6 @@
+reVX.hybrid\_stats.hybrid\_stats.kendall\_tau
+=============================================
+
+.. currentmodule:: reVX.hybrid_stats.hybrid_stats
+
+.. autofunction:: kendall_tau

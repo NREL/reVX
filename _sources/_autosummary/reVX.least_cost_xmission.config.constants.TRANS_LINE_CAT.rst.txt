@@ -1,0 +1,6 @@
+reVX.least\_cost\_xmission.config.constants.TRANS\_LINE\_CAT
+============================================================
+
+.. currentmodule:: reVX.least_cost_xmission.config.constants
+
+.. autodata:: TRANS_LINE_CAT

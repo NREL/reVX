@@ -1,0 +1,40 @@
+reVX.hybrid\_stats.hybrid\_stats.HybridStats
+============================================
+
+.. currentmodule:: reVX.hybrid_stats.hybrid_stats
+
+.. autoclass:: HybridStats
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~HybridStats.cf_profile
+      ~HybridStats.compute_stats
+      ~HybridStats.run
+      ~HybridStats.save_stats
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~HybridStats.STATS
+      ~HybridStats.lat_lon
+      ~HybridStats.meta
+      ~HybridStats.res_cls
+      ~HybridStats.solar_h5
+      ~HybridStats.statistics
+      ~HybridStats.time_index
+      ~HybridStats.wind_h5
+   
+   

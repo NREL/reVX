@@ -1,0 +1,6 @@
+reVX.utilities.reeds\_cols.add\_reeds\_columns
+==============================================
+
+.. currentmodule:: reVX.utilities.reeds_cols
+
+.. autofunction:: add_reeds_columns

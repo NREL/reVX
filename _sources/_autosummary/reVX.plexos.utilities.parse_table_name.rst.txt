@@ -1,0 +1,6 @@
+reVX.plexos.utilities.parse\_table\_name
+========================================
+
+.. currentmodule:: reVX.plexos.utilities
+
+.. autofunction:: parse_table_name

@@ -1,0 +1,34 @@
+reVX.config.reeds
+=================
+
+.. automodule:: reVX.config.reeds
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+   
+      ClassifyConfigGroup
+      ProfilesConfigGroup
+      ReedsConfig
+      TimeslicesConfigGroup
+   
+   
+
+   
+   
+   
+
+
+

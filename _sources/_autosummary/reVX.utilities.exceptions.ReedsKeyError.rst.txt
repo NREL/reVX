@@ -1,0 +1,6 @@
+reVX.utilities.exceptions.ReedsKeyError
+=======================================
+
+.. currentmodule:: reVX.utilities.exceptions
+
+.. autoexception:: ReedsKeyError

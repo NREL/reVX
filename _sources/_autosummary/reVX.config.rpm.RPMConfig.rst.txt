@@ -1,0 +1,57 @@
+reVX.config.rpm.RPMConfig
+=========================
+
+.. currentmodule:: reVX.config.rpm
+
+.. autoclass:: RPMConfig
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~RPMConfig.check_files
+      ~RPMConfig.check_overwrite_keys
+      ~RPMConfig.clear
+      ~RPMConfig.copy
+      ~RPMConfig.fromkeys
+      ~RPMConfig.get
+      ~RPMConfig.items
+      ~RPMConfig.keys
+      ~RPMConfig.pop
+      ~RPMConfig.popitem
+      ~RPMConfig.resolve_path
+      ~RPMConfig.set_self_dict
+      ~RPMConfig.setdefault
+      ~RPMConfig.str_replace_and_resolve
+      ~RPMConfig.update
+      ~RPMConfig.values
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~RPMConfig.NAME
+      ~RPMConfig.REQUIREMENTS
+      ~RPMConfig.STR_REP
+      ~RPMConfig.analysis_years
+      ~RPMConfig.cf_profiles
+      ~RPMConfig.cluster
+      ~RPMConfig.config_dir
+      ~RPMConfig.config_keys
+      ~RPMConfig.execution_control
+      ~RPMConfig.log_directory
+      ~RPMConfig.log_level
+      ~RPMConfig.name
+      ~RPMConfig.rep_profiles
+   
+   

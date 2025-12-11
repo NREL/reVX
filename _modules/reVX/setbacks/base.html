@@ -1,0 +1,1369 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>reVX.setbacks.base &mdash; reVX 0.5.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=e1a677a5"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            reVX
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../index.html">Home page</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc/installation_usage.html">Installation and Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html#recommended-citation">Recommended Citation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html#command-line-tools">Command Line Tools</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc/examples.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/examples.rpm.html">Resource Planning Model (RPM)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.rpm.html#rev-rpm-cli">reV-RPM CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.rpm.html#rpm-sub-package">RPM sub-package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/examples.setbacks.html">reVX Setbacks</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.setbacks.html#computing-setbacks-for-conus">Computing setbacks for CONUS</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../misc/examples.setbacks.html#ordinance-database">Ordinance database</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../misc/examples.setbacks.html#config-file-setup">Config file setup</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../misc/examples.setbacks.html#execution">Execution</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../misc/examples.setbacks.html#merging">Merging</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.setbacks.html#advanced-topics">Advanced Topics</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../misc/examples.setbacks.html#partial-setbacks">Partial Setbacks</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../misc/examples.setbacks.html#writing-directly-to-hdf5-files">Writing directly to HDF5 files</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../misc/examples.setbacks.html#feature-specific-generic-multipliers">Feature-specific generic multipliers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../misc/examples.setbacks.html#custom-setbacks-computations">Custom setbacks computations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../misc/examples.setbacks.html#batched-execution">Batched execution</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../misc/examples.setbacks.html#job-status">Job Status</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/examples.transmission.html">reVX LCP</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.transmission.html#h5-layer-file-creation">H5 Layer File Creation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.transmission.html#masks">Masks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.transmission.html#layer-creation-configuration-file">Layer Creation Configuration File</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../misc/examples.transmission.html#required-keys">Required Keys</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../misc/examples.transmission.html#optional-keys">Optional Keys</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../misc/examples.transmission.html#action-keys">Action Keys</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.transmission.html#layer-creation-config-file-examples">Layer Creation Config File Examples</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.transmission.html#running-the-layer-creator">Running the Layer Creator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.transmission.html#conus-onshore-example">CONUS (Onshore) Example</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../misc/examples.transmission.html#costs">Costs</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.transmission.html#reinforced-transmission">Reinforced Transmission</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../misc/examples.transmission.html#key-assumptions-under-this-approach">Key assumptions under this approach:</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.transmission.html#substation-connections-only-old">Substation connections only (OLD)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.transmission.html#substation-and-tie-line-connections-new">Substation and tie-line connections (New)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.transmission.html#offshore-least-cost-paths">Offshore Least Cost Paths</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../misc/examples.transmission.html#nomenclature-note">Nomenclature Note</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../misc/examples.transmission.html#offshore-workflow">Offshore Workflow</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../misc/examples.transmission.html#offshore-examples">Offshore Examples</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../_autosummary/reVX.html">API reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../_autosummary/reVX.cli.html">reVX.cli</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../_autosummary/reVX.config.html">reVX.config</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.config.least_cost_xmission.html">reVX.config.least_cost_xmission</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.config.least_cost_xmission.LeastCostPathsConfig.html">reVX.config.least_cost_xmission.LeastCostPathsConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.config.least_cost_xmission.LeastCostXmissionConfig.html">reVX.config.least_cost_xmission.LeastCostXmissionConfig</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.config.offshore.html">reVX.config.offshore</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.config.offshore.AssemblyAreasConfig.html">reVX.config.offshore.AssemblyAreasConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.config.offshore.DistToPortsConfig.html">reVX.config.offshore.DistToPortsConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.config.offshore.OffshoreInputsConfig.html">reVX.config.offshore.OffshoreInputsConfig</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.config.reeds.html">reVX.config.reeds</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.config.reeds.ClassifyConfigGroup.html">reVX.config.reeds.ClassifyConfigGroup</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.config.reeds.ProfilesConfigGroup.html">reVX.config.reeds.ProfilesConfigGroup</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.config.reeds.ReedsConfig.html">reVX.config.reeds.ReedsConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.config.reeds.TimeslicesConfigGroup.html">reVX.config.reeds.TimeslicesConfigGroup</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.config.rpm.html">reVX.config.rpm</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.config.rpm.ClusterConfigGroup.html">reVX.config.rpm.ClusterConfigGroup</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.config.rpm.RPMConfig.html">reVX.config.rpm.RPMConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.config.rpm.RepProfilesConfigGroup.html">reVX.config.rpm.RepProfilesConfigGroup</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.config.transmission_layer_creation.html">reVX.config.transmission_layer_creation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.config.transmission_layer_creation.LayerBuildComponents.html">reVX.config.transmission_layer_creation.LayerBuildComponents</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.config.transmission_layer_creation.Layers.html">reVX.config.transmission_layer_creation.Layers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.config.transmission_layer_creation.DryCosts.html">reVX.config.transmission_layer_creation.DryCosts</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.config.transmission_layer_creation.LayerBuildConfig.html">reVX.config.transmission_layer_creation.LayerBuildConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.config.transmission_layer_creation.LayerConfig.html">reVX.config.transmission_layer_creation.LayerConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.config.transmission_layer_creation.MergeFrictionBarriers.html">reVX.config.transmission_layer_creation.MergeFrictionBarriers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.config.transmission_layer_creation.RangeConfig.html">reVX.config.transmission_layer_creation.RangeConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.config.transmission_layer_creation.Rasterize.html">reVX.config.transmission_layer_creation.Rasterize</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.config.transmission_layer_creation.TransmissionLayerCreationConfig.html">reVX.config.transmission_layer_creation.TransmissionLayerCreationConfig</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.config.turbine_flicker.html">reVX.config.turbine_flicker</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.config.turbine_flicker.TurbineFlickerConfig.html">reVX.config.turbine_flicker.TurbineFlickerConfig</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.config.wind_dirs.html">reVX.config.wind_dirs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.config.wind_dirs.MeanWindDirsConfig.html">reVX.config.wind_dirs.MeanWindDirsConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.config.wind_dirs.ProminentWindDirsConfig.html">reVX.config.wind_dirs.ProminentWindDirsConfig</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../_autosummary/reVX.handlers.html">reVX.handlers</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.handlers.database.html">reVX.handlers.database</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.handlers.database.Database.html">reVX.handlers.database.Database</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.handlers.geopackage.html">reVX.handlers.geopackage</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.handlers.geopackage.GPKGMeta.html">reVX.handlers.geopackage.GPKGMeta</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.handlers.geotiff.html">reVX.handlers.geotiff</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.handlers.geotiff.Geotiff.html">reVX.handlers.geotiff.Geotiff</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.handlers.layered_h5.html">reVX.handlers.layered_h5</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.handlers.layered_h5.check_geotiff.html">reVX.handlers.layered_h5.check_geotiff</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.handlers.layered_h5.crs_match.html">reVX.handlers.layered_h5.crs_match</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.handlers.layered_h5.LayeredH5.html">reVX.handlers.layered_h5.LayeredH5</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.handlers.layered_h5.LayeredTransmissionH5.html">reVX.handlers.layered_h5.LayeredTransmissionH5</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.handlers.outputs.html">reVX.handlers.outputs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.handlers.outputs.Outputs.html">reVX.handlers.outputs.Outputs</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.handlers.sc_points.html">reVX.handlers.sc_points</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.handlers.sc_points.Point.html">reVX.handlers.sc_points.Point</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.handlers.sc_points.SupplyCurvePoints.html">reVX.handlers.sc_points.SupplyCurvePoints</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../_autosummary/reVX.hybrid_stats.html">reVX.hybrid_stats</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.hybrid_stats.hybrid_stats.html">reVX.hybrid_stats.hybrid_stats</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.hybrid_stats.hybrid_stats.kendall_tau.html">reVX.hybrid_stats.hybrid_stats.kendall_tau</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.hybrid_stats.hybrid_stats.pearson_correlation.html">reVX.hybrid_stats.hybrid_stats.pearson_correlation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.hybrid_stats.hybrid_stats.spearman_correlation.html">reVX.hybrid_stats.hybrid_stats.spearman_correlation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.hybrid_stats.hybrid_stats.HybridCrossCorrelation.html">reVX.hybrid_stats.hybrid_stats.HybridCrossCorrelation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.hybrid_stats.hybrid_stats.HybridStabilityCoefficient.html">reVX.hybrid_stats.hybrid_stats.HybridStabilityCoefficient</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.hybrid_stats.hybrid_stats.HybridStats.html">reVX.hybrid_stats.hybrid_stats.HybridStats</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.hybrid_stats.temporal_agg.html">reVX.hybrid_stats.temporal_agg</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.hybrid_stats.temporal_agg.get_time_index.html">reVX.hybrid_stats.temporal_agg.get_time_index</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.hybrid_stats.temporal_agg.DatasetAgg.html">reVX.hybrid_stats.temporal_agg.DatasetAgg</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.hybrid_stats.temporal_agg.TemporalAgg.html">reVX.hybrid_stats.temporal_agg.TemporalAgg</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../_autosummary/reVX.least_cost_xmission.html">reVX.least_cost_xmission</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.least_cost_xmission.config.html">reVX.least_cost_xmission.config</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.least_cost_xmission.config.constants.html">reVX.least_cost_xmission.config.constants</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.least_cost_xmission.config.xmission_config.html">reVX.least_cost_xmission.config.xmission_config</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.least_cost_xmission.layers.html">reVX.least_cost_xmission.layers</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.least_cost_xmission.layers.base.html">reVX.least_cost_xmission.layers.base</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.least_cost_xmission.layers.dry_cost_creator.html">reVX.least_cost_xmission.layers.dry_cost_creator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.least_cost_xmission.layers.layer_creator.html">reVX.least_cost_xmission.layers.layer_creator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.least_cost_xmission.layers.masks.html">reVX.least_cost_xmission.layers.masks</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.least_cost_xmission.layers.utils.html">reVX.least_cost_xmission.layers.utils</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.least_cost_xmission.least_cost_paths.html">reVX.least_cost_xmission.least_cost_paths</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.least_cost_xmission.least_cost_paths.min_reinforcement_costs.html">reVX.least_cost_xmission.least_cost_paths.min_reinforcement_costs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.least_cost_xmission.least_cost_paths.LeastCostPaths.html">reVX.least_cost_xmission.least_cost_paths.LeastCostPaths</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.least_cost_xmission.least_cost_paths.ReinforcementPaths.html">reVX.least_cost_xmission.least_cost_paths.ReinforcementPaths</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.least_cost_xmission.least_cost_paths_cli.html">reVX.least_cost_xmission.least_cost_paths_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.least_cost_xmission.least_cost_paths_cli.eagle.html">reVX.least_cost_xmission.least_cost_paths_cli.eagle</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.least_cost_xmission.least_cost_paths_cli.get_node_cmd.html">reVX.least_cost_xmission.least_cost_paths_cli.get_node_cmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.least_cost_xmission.least_cost_paths_cli.run_local.html">reVX.least_cost_xmission.least_cost_paths_cli.run_local</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.least_cost_xmission.least_cost_xmission.html">reVX.least_cost_xmission.least_cost_xmission</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.least_cost_xmission.least_cost_xmission.region_mapper.html">reVX.least_cost_xmission.least_cost_xmission.region_mapper</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.least_cost_xmission.least_cost_xmission.LeastCostXmission.html">reVX.least_cost_xmission.least_cost_xmission.LeastCostXmission</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.least_cost_xmission.least_cost_xmission.RegionalXmission.html">reVX.least_cost_xmission.least_cost_xmission.RegionalXmission</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.least_cost_xmission.least_cost_xmission_cli.html">reVX.least_cost_xmission.least_cost_xmission_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.least_cost_xmission.least_cost_xmission_cli.eagle.html">reVX.least_cost_xmission.least_cost_xmission_cli.eagle</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.least_cost_xmission.least_cost_xmission_cli.get_node_cmd.html">reVX.least_cost_xmission.least_cost_xmission_cli.get_node_cmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.least_cost_xmission.least_cost_xmission_cli.run_local.html">reVX.least_cost_xmission.least_cost_xmission_cli.run_local</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.least_cost_xmission.trans_cap_costs.html">reVX.least_cost_xmission.trans_cap_costs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.least_cost_xmission.trans_cap_costs.RegionalTransCapCosts.html">reVX.least_cost_xmission.trans_cap_costs.RegionalTransCapCosts</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.least_cost_xmission.trans_cap_costs.ReinforcementLineCosts.html">reVX.least_cost_xmission.trans_cap_costs.ReinforcementLineCosts</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.least_cost_xmission.trans_cap_costs.TieLineCosts.html">reVX.least_cost_xmission.trans_cap_costs.TieLineCosts</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.least_cost_xmission.trans_cap_costs.TransCapCosts.html">reVX.least_cost_xmission.trans_cap_costs.TransCapCosts</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.least_cost_xmission.transmission_layer_creator_cli.html">reVX.least_cost_xmission.transmission_layer_creator_cli</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../_autosummary/reVX.offshore.html">reVX.offshore</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.offshore.assembly_areas.html">reVX.offshore.assembly_areas</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.offshore.assembly_areas.AssemblyAreas.html">reVX.offshore.assembly_areas.AssemblyAreas</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.offshore.assembly_areas_cli.html">reVX.offshore.assembly_areas_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.offshore.assembly_areas_cli.eagle.html">reVX.offshore.assembly_areas_cli.eagle</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.offshore.assembly_areas_cli.get_node_cmd.html">reVX.offshore.assembly_areas_cli.get_node_cmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.offshore.assembly_areas_cli.run_local.html">reVX.offshore.assembly_areas_cli.run_local</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.offshore.dist_to_ports.html">reVX.offshore.dist_to_ports</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.offshore.dist_to_ports.DistanceToPorts.html">reVX.offshore.dist_to_ports.DistanceToPorts</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.offshore.dist_to_ports_cli.html">reVX.offshore.dist_to_ports_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.offshore.dist_to_ports_cli.eagle.html">reVX.offshore.dist_to_ports_cli.eagle</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.offshore.dist_to_ports_cli.get_node_cmd.html">reVX.offshore.dist_to_ports_cli.get_node_cmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.offshore.dist_to_ports_cli.run_local.html">reVX.offshore.dist_to_ports_cli.run_local</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.offshore.dist_to_ports_converter.html">reVX.offshore.dist_to_ports_converter</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.offshore.dist_to_ports_converter.DistToPortsConverter.html">reVX.offshore.dist_to_ports_converter.DistToPortsConverter</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.offshore.offshore_inputs.html">reVX.offshore.offshore_inputs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.offshore.offshore_inputs.OffshoreInputs.html">reVX.offshore.offshore_inputs.OffshoreInputs</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.offshore.offshore_inputs_cli.html">reVX.offshore.offshore_inputs_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.offshore.offshore_inputs_cli.eagle.html">reVX.offshore.offshore_inputs_cli.eagle</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.offshore.offshore_inputs_cli.get_node_cmd.html">reVX.offshore.offshore_inputs_cli.get_node_cmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.offshore.offshore_inputs_cli.run_local.html">reVX.offshore.offshore_inputs_cli.run_local</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../_autosummary/reVX.plexos.html">reVX.plexos</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.plexos.base.html">reVX.plexos.base</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.plexos.base.BaseProfileAggregation.html">reVX.plexos.base.BaseProfileAggregation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.plexos.base.PlexosNode.html">reVX.plexos.base.PlexosNode</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.plexos.dpv_plexos.html">reVX.plexos.dpv_plexos</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.plexos.dpv_plexos.DpvPlexosAggregation.html">reVX.plexos.dpv_plexos.DpvPlexosAggregation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.plexos.dpv_plexos.DpvResource.html">reVX.plexos.dpv_plexos.DpvResource</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.plexos.plexos_plants.html">reVX.plexos.plexos_plants</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.plexos.plexos_plants.PlantProfileAggregation.html">reVX.plexos.plexos_plants.PlantProfileAggregation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.plexos.plexos_plants.Plants.html">reVX.plexos.plexos_plants.Plants</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.plexos.plexos_plants.PlexosPlants.html">reVX.plexos.plexos_plants.PlexosPlants</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.plexos.plexos_plants_cli.html">reVX.plexos.plexos_plants_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.plexos.plexos_plants_cli.get_node_cmd.html">reVX.plexos.plexos_plants_cli.get_node_cmd</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.plexos.rev_reeds_plexos.html">reVX.plexos.rev_reeds_plexos</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.plexos.rev_reeds_plexos.PlexosAggregation.html">reVX.plexos.rev_reeds_plexos.PlexosAggregation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.plexos.rev_reeds_plexos.RevReedsPlexosManager.html">reVX.plexos.rev_reeds_plexos.RevReedsPlexosManager</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.plexos.rev_reeds_plexos_cli.html">reVX.plexos.rev_reeds_plexos_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.plexos.rev_reeds_plexos_cli.get_node_cmd.html">reVX.plexos.rev_reeds_plexos_cli.get_node_cmd</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.plexos.simple_plant_builder.html">reVX.plexos.simple_plant_builder</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.plexos.simple_plant_builder.SimplePlantBuilder.html">reVX.plexos.simple_plant_builder.SimplePlantBuilder</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.plexos.simple_plant_builder_cli.html">reVX.plexos.simple_plant_builder_cli</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.plexos.utilities.html">reVX.plexos.utilities</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.plexos.utilities.get_coord_labels.html">reVX.plexos.utilities.get_coord_labels</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.plexos.utilities.parse_table_name.html">reVX.plexos.utilities.parse_table_name</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.plexos.utilities.DataCleaner.html">reVX.plexos.utilities.DataCleaner</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.plexos.utilities.ProjectGidHandler.html">reVX.plexos.utilities.ProjectGidHandler</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../_autosummary/reVX.pras.html">reVX.pras</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.pras.rev_reeds_pras.html">reVX.pras.rev_reeds_pras</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.pras.rev_reeds_pras.PrasAggregation.html">reVX.pras.rev_reeds_pras.PrasAggregation</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../_autosummary/reVX.red_e.html">reVX.red_e</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.red_e.tech_potential.html">reVX.red_e.tech_potential</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.red_e.tech_potential.TechPotential.html">reVX.red_e.tech_potential.TechPotential</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../_autosummary/reVX.rpm.html">reVX.rpm</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.rpm.rpm_cli.html">reVX.rpm.rpm_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.rpm.rpm_cli.eagle.html">reVX.rpm.rpm_cli.eagle</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.rpm.rpm_cli.get_node_cmd.html">reVX.rpm.rpm_cli.get_node_cmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.rpm.rpm_cli.run_local.html">reVX.rpm.rpm_cli.run_local</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.rpm.rpm_clusters.html">reVX.rpm.rpm_clusters</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.rpm.rpm_clusters.RPMClusters.html">reVX.rpm.rpm_clusters.RPMClusters</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.rpm.rpm_clusters.RPMWavelets.html">reVX.rpm.rpm_clusters.RPMWavelets</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.rpm.rpm_manager.html">reVX.rpm.rpm_manager</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.rpm.rpm_manager.RPMClusterManager.html">reVX.rpm.rpm_manager.RPMClusterManager</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.rpm.rpm_output.html">reVX.rpm.rpm_output</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.rpm.rpm_output.RPMOutput.html">reVX.rpm.rpm_output.RPMOutput</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.rpm.rpm_output.RepresentativeProfiles.html">reVX.rpm.rpm_output.RepresentativeProfiles</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../_autosummary/reVX.setbacks.html">reVX.setbacks</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.setbacks.base.html">reVX.setbacks.base</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.setbacks.base.BUFFERS.html">reVX.setbacks.base.BUFFERS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.setbacks.base.FEATURE_FILTERS.html">reVX.setbacks.base.FEATURE_FILTERS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.setbacks.base.AbstractBaseSetbacks.html">reVX.setbacks.base.AbstractBaseSetbacks</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.setbacks.base.Rasterizer.html">reVX.setbacks.base.Rasterizer</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.setbacks.functions.html">reVX.setbacks.functions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.setbacks.functions.features_clipped_to_county.html">reVX.setbacks.functions.features_clipped_to_county</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.setbacks.functions.features_with_centroid_in_county.html">reVX.setbacks.functions.features_with_centroid_in_county</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.setbacks.functions.parcel_buffer.html">reVX.setbacks.functions.parcel_buffer</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.setbacks.functions.positive_buffer.html">reVX.setbacks.functions.positive_buffer</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.setbacks.regulations.html">reVX.setbacks.regulations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.setbacks.regulations.select_setback_regulations.html">reVX.setbacks.regulations.select_setback_regulations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.setbacks.regulations.validate_setback_regulations_input.html">reVX.setbacks.regulations.validate_setback_regulations_input</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.setbacks.regulations.SetbackRegulations.html">reVX.setbacks.regulations.SetbackRegulations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.setbacks.regulations.WindSetbackRegulations.html">reVX.setbacks.regulations.WindSetbackRegulations</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.setbacks.setbacks.html">reVX.setbacks.setbacks</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.setbacks.setbacks.SETBACK_SPECS.html">reVX.setbacks.setbacks.SETBACK_SPECS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.setbacks.setbacks.setbacks_calculator.html">reVX.setbacks.setbacks.setbacks_calculator</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.setbacks.setbacks_cli.html">reVX.setbacks.setbacks_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.setbacks.setbacks_cli.compute_setbacks.html">reVX.setbacks.setbacks_cli.compute_setbacks</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.setbacks.setbacks_cli.merge_setbacks.html">reVX.setbacks.setbacks_cli.merge_setbacks</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.setbacks.setbacks_cli.preprocess_merge_config.html">reVX.setbacks.setbacks_cli.preprocess_merge_config</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.setbacks.setbacks_cli.preprocess_setbacks_config.html">reVX.setbacks.setbacks_cli.preprocess_setbacks_config</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.setbacks.setbacks_converter.html">reVX.setbacks.setbacks_converter</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.setbacks.setbacks_converter.parse_setbacks.html">reVX.setbacks.setbacks_converter.parse_setbacks</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.setbacks.setbacks_converter.SetbacksConverter.html">reVX.setbacks.setbacks_converter.SetbacksConverter</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../_autosummary/reVX.turbine_flicker.html">reVX.turbine_flicker</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.turbine_flicker.regulations.html">reVX.turbine_flicker.regulations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.turbine_flicker.regulations.FlickerRegulations.html">reVX.turbine_flicker.regulations.FlickerRegulations</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.turbine_flicker.turbine_flicker.html">reVX.turbine_flicker.turbine_flicker</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.turbine_flicker.turbine_flicker.compute_flicker_exclusions.html">reVX.turbine_flicker.turbine_flicker.compute_flicker_exclusions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.turbine_flicker.turbine_flicker.TurbineFlicker.html">reVX.turbine_flicker.turbine_flicker.TurbineFlicker</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.turbine_flicker.turbine_flicker_cli.html">reVX.turbine_flicker.turbine_flicker_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.turbine_flicker.turbine_flicker_cli.eagle.html">reVX.turbine_flicker.turbine_flicker_cli.eagle</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.turbine_flicker.turbine_flicker_cli.flicker_fn_out.html">reVX.turbine_flicker.turbine_flicker_cli.flicker_fn_out</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.turbine_flicker.turbine_flicker_cli.get_node_cmd.html">reVX.turbine_flicker.turbine_flicker_cli.get_node_cmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.turbine_flicker.turbine_flicker_cli.run_local.html">reVX.turbine_flicker.turbine_flicker_cli.run_local</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../_autosummary/reVX.utilities.html">reVX.utilities</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.utilities.cluster_methods.html">reVX.utilities.cluster_methods</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.utilities.cluster_methods.ClusteringMethods.html">reVX.utilities.cluster_methods.ClusteringMethods</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.utilities.exceptions.html">reVX.utilities.exceptions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.utilities.exceptions.GeoTiffKeyError.html">reVX.utilities.exceptions.GeoTiffKeyError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.utilities.exceptions.InvalidMCPStartValueError.html">reVX.utilities.exceptions.InvalidMCPStartValueError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.utilities.exceptions.LeastCostPathNotFoundError.html">reVX.utilities.exceptions.LeastCostPathNotFoundError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.utilities.exceptions.ProfileCheckError.html">reVX.utilities.exceptions.ProfileCheckError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.utilities.exceptions.RPMRuntimeError.html">reVX.utilities.exceptions.RPMRuntimeError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.utilities.exceptions.RPMTypeError.html">reVX.utilities.exceptions.RPMTypeError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.utilities.exceptions.RPMValueError.html">reVX.utilities.exceptions.RPMValueError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.utilities.exceptions.ReedsKeyError.html">reVX.utilities.exceptions.ReedsKeyError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.utilities.exceptions.ReedsRuntimeError.html">reVX.utilities.exceptions.ReedsRuntimeError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.utilities.exceptions.ReedsValueError.html">reVX.utilities.exceptions.ReedsValueError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.utilities.exceptions.SupplyCurvePointCapacityError.html">reVX.utilities.exceptions.SupplyCurvePointCapacityError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.utilities.exceptions.reVXError.html">reVX.utilities.exceptions.reVXError</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.utilities.exclusions.html">reVX.utilities.exclusions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.utilities.exclusions.AbstractBaseExclusionsMerger.html">reVX.utilities.exclusions.AbstractBaseExclusionsMerger</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.utilities.exclusions.AbstractExclusionCalculatorInterface.html">reVX.utilities.exclusions.AbstractExclusionCalculatorInterface</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.utilities.fix_sc_lat_lons.html">reVX.utilities.fix_sc_lat_lons</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.utilities.fix_sc_lat_lons.fix_sc_lat_lon.html">reVX.utilities.fix_sc_lat_lons.fix_sc_lat_lon</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.utilities.forecasts.html">reVX.utilities.forecasts</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.utilities.forecasts.FcstUtils.html">reVX.utilities.forecasts.FcstUtils</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.utilities.output_extractor.html">reVX.utilities.output_extractor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.utilities.rasterize.html">reVX.utilities.rasterize</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.utilities.reeds_cols.html">reVX.utilities.reeds_cols</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.utilities.reeds_cols.add_county_info.html">reVX.utilities.reeds_cols.add_county_info</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.utilities.reeds_cols.add_extra_data.html">reVX.utilities.reeds_cols.add_extra_data</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.utilities.reeds_cols.add_nrel_regions.html">reVX.utilities.reeds_cols.add_nrel_regions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.utilities.reeds_cols.add_reeds_columns.html">reVX.utilities.reeds_cols.add_reeds_columns</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.utilities.region_classifier.html">reVX.utilities.region_classifier</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.utilities.region_classifier.RegionClassifier.html">reVX.utilities.region_classifier.RegionClassifier</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.utilities.regulations.html">reVX.utilities.regulations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.utilities.regulations.AbstractBaseRegulations.html">reVX.utilities.regulations.AbstractBaseRegulations</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.utilities.utilities.html">reVX.utilities.utilities</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.utilities.utilities.centered_pixels.html">reVX.utilities.utilities.centered_pixels</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.utilities.utilities.coordinate_distance.html">reVX.utilities.utilities.coordinate_distance</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.utilities.utilities.load_fips_to_state_map.html">reVX.utilities.utilities.load_fips_to_state_map</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.utilities.utilities.log_versions.html">reVX.utilities.utilities.log_versions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.utilities.utilities.rev_sc_to_geotiff_arr.html">reVX.utilities.utilities.rev_sc_to_geotiff_arr</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.utilities.utilities.to_geo.html">reVX.utilities.utilities.to_geo</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.utilities.utilities.transform_pixels_to_lat_lon.html">reVX.utilities.utilities.transform_pixels_to_lat_lon</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../_autosummary/reVX.version.html">reVX.version</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../_autosummary/reVX.wind_dirs.html">reVX.wind_dirs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.wind_dirs.mean_wind_dirs.html">reVX.wind_dirs.mean_wind_dirs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.wind_dirs.mean_wind_dirs.MeanWindDirections.html">reVX.wind_dirs.mean_wind_dirs.MeanWindDirections</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.wind_dirs.mean_wind_dirs_cli.html">reVX.wind_dirs.mean_wind_dirs_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.wind_dirs.mean_wind_dirs_cli.eagle.html">reVX.wind_dirs.mean_wind_dirs_cli.eagle</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.wind_dirs.mean_wind_dirs_cli.get_node_cmd.html">reVX.wind_dirs.mean_wind_dirs_cli.get_node_cmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.wind_dirs.mean_wind_dirs_cli.run_local.html">reVX.wind_dirs.mean_wind_dirs_cli.run_local</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.wind_dirs.mean_wind_dirs_point.html">reVX.wind_dirs.mean_wind_dirs_point</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.html">reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.wind_dirs.prominent_wind_dirs.html">reVX.wind_dirs.prominent_wind_dirs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.wind_dirs.prominent_wind_dirs.ProminentWindDirections.html">reVX.wind_dirs.prominent_wind_dirs.ProminentWindDirections</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_autosummary/reVX.wind_dirs.prominent_wind_dirs_cli.html">reVX.wind_dirs.prominent_wind_dirs_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.wind_dirs.prominent_wind_dirs_cli.eagle.html">reVX.wind_dirs.prominent_wind_dirs_cli.eagle</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.wind_dirs.prominent_wind_dirs_cli.get_node_cmd.html">reVX.wind_dirs.prominent_wind_dirs_cli.get_node_cmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_autosummary/reVX.wind_dirs.prominent_wind_dirs_cli.run_local.html">reVX.wind_dirs.prominent_wind_dirs_cli.run_local</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../_cli/cli.html">CLI reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../_cli/least-cost-paths.html">least-cost-paths</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/least-cost-paths.html#least-cost-paths-add-rr-to-nn">add-rr-to-nn</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/least-cost-paths.html#least-cost-paths-from-config">from-config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/least-cost-paths.html#least-cost-paths-local">local</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/least-cost-paths.html#least-cost-paths-map-ss-to-rr">map-ss-to-rr</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/least-cost-paths.html#least-cost-paths-ss-from-conn">ss-from-conn</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/least-cost-paths.html#least-cost-paths-valid-config-keys">valid-config-keys</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../_cli/least-cost-xmission.html">least-cost-xmission</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/least-cost-xmission.html#least-cost-xmission-from-config">from-config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/least-cost-xmission.html#least-cost-xmission-local">local</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/least-cost-xmission.html#least-cost-xmission-merge-output">merge-output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/least-cost-xmission.html#least-cost-xmission-merge-reinforcement-costs">merge-reinforcement-costs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/least-cost-xmission.html#least-cost-xmission-valid-config-keys">valid-config-keys</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../_cli/mean-wind-dirs.html">mean-wind-dirs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/mean-wind-dirs.html#mean-wind-dirs-from-config">from-config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/mean-wind-dirs.html#mean-wind-dirs-local">local</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/mean-wind-dirs.html#mean-wind-dirs-valid-config-keys">valid-config-keys</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../_cli/offshore-assembly-areas.html">offshore-assembly-areas</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/offshore-assembly-areas.html#offshore-assembly-areas-from-config">from-config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/offshore-assembly-areas.html#offshore-assembly-areas-local">local</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/offshore-assembly-areas.html#offshore-assembly-areas-valid-config-keys">valid-config-keys</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../_cli/offshore-dist-to-ports.html">offshore-dist-to-ports</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/offshore-dist-to-ports.html#offshore-dist-to-ports-from-config">from-config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/offshore-dist-to-ports.html#offshore-dist-to-ports-local">local</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/offshore-dist-to-ports.html#offshore-dist-to-ports-valid-config-keys">valid-config-keys</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../_cli/offshore-inputs.html">offshore-inputs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/offshore-inputs.html#offshore-inputs-from-config">from-config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/offshore-inputs.html#offshore-inputs-local">local</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/offshore-inputs.html#offshore-inputs-valid-config-keys">valid-config-keys</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../_cli/plexos-plants.html">plexos-plants</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/plexos-plants.html#plexos-plants-eagle">eagle</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../_cli/prominent-wind-dirs.html">prominent-wind-dirs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/prominent-wind-dirs.html#prominent-wind-dirs-from-config">from-config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/prominent-wind-dirs.html#prominent-wind-dirs-local">local</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/prominent-wind-dirs.html#prominent-wind-dirs-valid-config-keys">valid-config-keys</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../_cli/reV-plexos.html">reV-plexos</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/reV-plexos.html#rev-plexos-eagle">eagle</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../_cli/reV-rpm.html">reV-rpm</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/reV-rpm.html#rev-rpm-from-config">from-config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/reV-rpm.html#rev-rpm-local">local</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_cli/reV-rpm.html#rev-rpm-local-cluster">cluster</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_cli/reV-rpm.html#rev-rpm-local-rep-profiles">rep-profiles</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/reV-rpm.html#rev-rpm-valid-config-keys">valid-config-keys</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../_cli/reVX.html">reVX</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/reVX.html#revx-add-reeds-cols">add-reeds-cols</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/reVX.html#revx-correct-forecast">correct-forecast</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/reVX.html#revx-exclusions">exclusions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../_cli/reVX.html#revx-exclusions-layers-from-h5">layers-from-h5</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_cli/reVX.html#revx-exclusions-layers-to-h5">layers-to-h5</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../_cli/reVX.html#revx-exclusions-mask">mask</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/reVX.html#revx-extract-output-year">extract-output-year</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/reVX.html#revx-fix-rev-sc-lat-lon">fix-rev-sc-lat-lon</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/reVX.html#revx-region-classifier">region-classifier</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/reVX.html#revx-rev-sc-to-gpkg">rev-sc-to-gpkg</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/reVX.html#revx-rev-sc-to-tiff">rev-sc-to-tiff</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../_cli/setbacks.html">setbacks</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/setbacks.html#setbacks-batch">batch</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/setbacks.html#setbacks-compute">compute</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/setbacks.html#setbacks-merge">merge</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/setbacks.html#setbacks-pipeline">pipeline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/setbacks.html#setbacks-reset-status">reset-status</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/setbacks.html#setbacks-script">script</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/setbacks.html#setbacks-status">status</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/setbacks.html#setbacks-template-configs">template-configs</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../_cli/simple-plant-builder.html">simple-plant-builder</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../_cli/transmission-layer-creator.html">transmission-layer-creator</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/transmission-layer-creator.html#transmission-layer-creator-convert-pois">convert-pois</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/transmission-layer-creator.html#transmission-layer-creator-create-h5">create-h5</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/transmission-layer-creator.html#transmission-layer-creator-create-masks">create-masks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/transmission-layer-creator.html#transmission-layer-creator-from-config">from-config</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../_cli/turbine-flicker.html">turbine-flicker</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/turbine-flicker.html#turbine-flicker-from-config">from-config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/turbine-flicker.html#turbine-flicker-local">local</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../_cli/turbine-flicker.html#turbine-flicker-valid-config-keys">valid-config-keys</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">reVX</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">reVX.setbacks.base</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for reVX.setbacks.base</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Base classes for setback exclusion computation</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">copy</span><span class="w"> </span><span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">warnings</span><span class="w"> </span><span class="kn">import</span> <span class="n">warn</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">math</span><span class="w"> </span><span class="kn">import</span> <span class="n">floor</span><span class="p">,</span> <span class="n">ceil</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">product</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">concurrent.futures</span><span class="w"> </span><span class="kn">import</span> <span class="n">as_completed</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">geopandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">gpd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">shapely.ops</span><span class="w"> </span><span class="kn">import</span> <span class="n">unary_union</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">shapely.validation</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_valid</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rasterio</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span><span class="n">windows</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">Affine</span><span class="p">,</span> <span class="n">coords</span><span class="p">,</span>
+                      <span class="n">features</span> <span class="k">as</span> <span class="n">rio_features</span><span class="p">)</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">rex.utilities</span><span class="w"> </span><span class="kn">import</span> <span class="n">log_mem</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rex.utilities.execution</span><span class="w"> </span><span class="kn">import</span> <span class="n">SpawnProcessPool</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">reV.handlers.exclusions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExclusionLayers</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">reVX.handlers.geopackage</span><span class="w"> </span><span class="kn">import</span> <span class="n">GPKGMeta</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">reVX.utilities.exclusions</span><span class="w"> </span><span class="kn">import</span> <span class="n">AbstractBaseExclusionsMerger</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">reVX.setbacks.functions</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span><span class="n">parcel_buffer</span><span class="p">,</span> <span class="n">positive_buffer</span><span class="p">,</span>
+                                     <span class="n">features_clipped_to_county</span><span class="p">,</span>
+                                     <span class="n">features_with_centroid_in_county</span><span class="p">)</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<span class="n">BUFFERS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;default&quot;</span><span class="p">:</span> <span class="n">positive_buffer</span><span class="p">,</span>
+    <span class="s2">&quot;parcel&quot;</span><span class="p">:</span> <span class="n">parcel_buffer</span><span class="p">,</span>
+<span class="p">}</span>
+<span class="sd">&quot;&quot;&quot;Types of buffers available for setback calculations. &quot;&quot;&quot;</span>
+
+
+<span class="n">FEATURE_FILTERS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;centroid&quot;</span><span class="p">:</span> <span class="n">features_with_centroid_in_county</span><span class="p">,</span>
+    <span class="s2">&quot;clip&quot;</span><span class="p">:</span> <span class="n">features_clipped_to_county</span><span class="p">,</span>
+<span class="p">}</span>
+<span class="sd">&quot;&quot;&quot;Types of feature filters available for setback calculations. &quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="Rasterizer">
+<a class="viewcode-back" href="../../../_autosummary/reVX.setbacks.base.Rasterizer.html#reVX.setbacks.base.Rasterizer">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Rasterizer</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper class to rasterize shapes.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">excl_fpath</span><span class="p">,</span> <span class="n">weights_calculation_upscale_factor</span><span class="p">,</span>
+                 <span class="n">hsds</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        excl_fpath : str</span>
+<span class="sd">            Path to .h5 file containing template layers. The raster will</span>
+<span class="sd">            match the shape and profile of these layers.</span>
+<span class="sd">        weights_calculation_upscale_factor : int</span>
+<span class="sd">            If this value is an int &gt; 1, the output will be a layer with</span>
+<span class="sd">            **inclusion** weight values (floats ranging from 0 to 1).</span>
+<span class="sd">            Note that this is backwards w.r.t the typical output of</span>
+<span class="sd">            exclusion integer values (1 for excluded, 0 otherwise).</span>
+<span class="sd">            Values &lt;= 1 will still return a standard exclusion mask.</span>
+<span class="sd">            For example, a cell that was previously excluded with a</span>
+<span class="sd">            a boolean mask (value of 1) may instead be converted to an</span>
+<span class="sd">            inclusion weight value of 0.75, meaning that 75% of the area</span>
+<span class="sd">            corresponding to that point should be included (i.e. the</span>
+<span class="sd">            exclusion feature only intersected a small portion - 25% -</span>
+<span class="sd">            of the cell). This percentage inclusion value is calculated</span>
+<span class="sd">            by upscaling the output array using this input value,</span>
+<span class="sd">            rasterizing the exclusion features onto it, and counting the</span>
+<span class="sd">            number of resulting sub-cells excluded by the feature. For</span>
+<span class="sd">            example, setting the value to 3 would split each output</span>
+<span class="sd">            cell into nine sub-cells - 3 divisions in each dimension.</span>
+<span class="sd">            After the feature is rasterized on this high-resolution</span>
+<span class="sd">            sub-grid, the area of the non-excluded sub-cells is totaled</span>
+<span class="sd">            and divided by the area of the original cell to obtain the</span>
+<span class="sd">            final inclusion percentage. Therefore, a larger upscale</span>
+<span class="sd">            factor results in more accurate percentage values. If</span>
+<span class="sd">            ``None`` (or a value &lt;= 1), this process is skipped and the</span>
+<span class="sd">            output is a boolean exclusion mask. By default ``None``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">props</span> <span class="o">=</span> <span class="n">_parse_excl_properties</span><span class="p">(</span><span class="n">excl_fpath</span><span class="p">,</span> <span class="n">hsds</span><span class="o">=</span><span class="n">hsds</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_shape</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_profile</span> <span class="o">=</span> <span class="n">props</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_scale_factor</span> <span class="o">=</span> <span class="n">weights_calculation_upscale_factor</span> <span class="ow">or</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_scale_factor</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_scale_factor</span> <span class="o">//</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">profile</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Geotiff profile.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_profile</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;rasterio.Affine: Affine transform for exclusion layer. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Affine</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="p">[</span><span class="s2">&quot;transform&quot;</span><span class="p">])</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">arr_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Rasterize array shape.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        tuple</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shape</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">inclusions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Flag indicating wether or not the output raster represents</span>
+<span class="sd">        inclusion values.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        bool</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scale_factor</span> <span class="o">&gt;</span> <span class="mi">1</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_no_exclusions_array</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">multiplier</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get an array of the correct shape representing no exclusions.</span>
+
+<span class="sd">        The array contains all zeros, and a new one is created</span>
+<span class="sd">        for every function call.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        multiplier : int, optional</span>
+<span class="sd">            Integer multiplier value used to scale up the dimensions of</span>
+<span class="sd">            the array exclusions array (e.g. multiplier of 3 turns an</span>
+<span class="sd">            array of shape (10, 20) into an array of shape (30, 60)).</span>
+<span class="sd">        window : :cls:`rasterio.windows.Window`</span>
+<span class="sd">            A ``rasterio`` window defining the area of the raster. Can</span>
+<span class="sd">            be used to speed up computation and decrease memory</span>
+<span class="sd">            requirements if features are localized to a small portion of</span>
+<span class="sd">            the raster array.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.array</span>
+<span class="sd">            Array of zeros representing no exclusions.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">window</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">shape</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">x</span> <span class="o">*</span> <span class="n">multiplier</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">arr_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="n">window</span><span class="o">.</span><span class="n">height</span> <span class="o">*</span> <span class="n">multiplier</span><span class="p">,</span> <span class="n">window</span><span class="o">.</span><span class="n">width</span> <span class="o">*</span> <span class="n">multiplier</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;uint8&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Rasterizer.rasterize">
+<a class="viewcode-back" href="../../../_autosummary/reVX.setbacks.base.Rasterizer.html#reVX.setbacks.base.Rasterizer.rasterize">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">rasterize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shapes</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert geometries into exclusions array.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        shapes : list, optional</span>
+<span class="sd">            List of geometries to rasterize (i.e. list(gdf[&quot;geometry&quot;])).</span>
+<span class="sd">            If `None` or empty list, returns array of zeros.</span>
+<span class="sd">        window : :obj:`rasterio.windows.Window`</span>
+<span class="sd">            A ``rasterio`` window defining the area of the raster. Can</span>
+<span class="sd">            be used to speed up computation and decrease memory</span>
+<span class="sd">            requirements if features are localized to a small portion of</span>
+<span class="sd">            the raster array.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        arr : ndarray</span>
+<span class="sd">            Rasterized array of shapes.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">shapes</span> <span class="o">=</span> <span class="n">shapes</span> <span class="ow">or</span> <span class="p">[]</span>
+        <span class="n">shapes</span> <span class="o">=</span> <span class="p">[(</span><span class="n">geom</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">geom</span> <span class="ow">in</span> <span class="n">shapes</span> <span class="k">if</span> <span class="n">geom</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">inclusions</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rasterize_to_weights</span><span class="p">(</span><span class="n">shapes</span><span class="p">,</span> <span class="n">window</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rasterize_to_mask</span><span class="p">(</span><span class="n">shapes</span><span class="p">,</span> <span class="n">window</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_rasterize_to_weights</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shapes</span><span class="p">,</span> <span class="n">window</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Rasterize features to weights using a high-resolution array.&quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">shapes</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">((</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_no_exclusions_array</span><span class="p">(</span><span class="n">window</span><span class="o">=</span><span class="n">window</span><span class="p">))</span>
+                    <span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">))</span>
+
+        <span class="n">hr_arr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_no_exclusions_array</span><span class="p">(</span><span class="n">multiplier</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_scale_factor</span><span class="p">,</span>
+                                           <span class="n">window</span><span class="o">=</span><span class="n">window</span><span class="p">)</span>
+        <span class="n">transform</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_window_transform</span><span class="p">(</span><span class="n">window</span><span class="p">)</span>
+        <span class="n">transform</span> <span class="o">*=</span> <span class="n">transform</span><span class="o">.</span><span class="n">scale</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scale_factor</span><span class="p">)</span>
+
+        <span class="n">rio_features</span><span class="o">.</span><span class="n">rasterize</span><span class="p">(</span><span class="n">shapes</span><span class="o">=</span><span class="n">shapes</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="n">hr_arr</span><span class="p">,</span> <span class="n">fill</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                               <span class="n">transform</span><span class="o">=</span><span class="n">transform</span><span class="p">)</span>
+
+        <span class="n">arr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aggregate_high_res</span><span class="p">(</span><span class="n">hr_arr</span><span class="p">,</span> <span class="n">window</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">1</span> <span class="o">-</span> <span class="p">(</span><span class="n">arr</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scale_factor</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_rasterize_to_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shapes</span><span class="p">,</span> <span class="n">window</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Rasterize features with to an exclusion mask.&quot;&quot;&quot;</span>
+
+        <span class="n">arr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_no_exclusions_array</span><span class="p">(</span><span class="n">window</span><span class="o">=</span><span class="n">window</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">shapes</span><span class="p">:</span>
+            <span class="n">transform</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_window_transform</span><span class="p">(</span><span class="n">window</span><span class="p">)</span>
+            <span class="n">rio_features</span><span class="o">.</span><span class="n">rasterize</span><span class="p">(</span><span class="n">shapes</span><span class="o">=</span><span class="n">shapes</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="n">arr</span><span class="p">,</span> <span class="n">fill</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                                   <span class="n">transform</span><span class="o">=</span><span class="n">transform</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">arr</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_aggregate_high_res</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hr_arr</span><span class="p">,</span> <span class="n">window</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Aggregate the high resolution exclusions array to output shape. &quot;&quot;&quot;</span>
+
+        <span class="n">arr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_no_exclusions_array</span><span class="p">(</span><span class="n">window</span><span class="o">=</span><span class="n">window</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">product</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_scale_factor</span><span class="p">),</span>
+                            <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_scale_factor</span><span class="p">)):</span>
+            <span class="n">arr</span> <span class="o">+=</span> <span class="n">hr_arr</span><span class="p">[</span><span class="n">i</span><span class="p">::</span><span class="bp">self</span><span class="o">.</span><span class="n">_scale_factor</span><span class="p">,</span> <span class="n">j</span><span class="p">::</span><span class="bp">self</span><span class="o">.</span><span class="n">_scale_factor</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">arr</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_window_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">window</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate the transform for a given window, if any. &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">window</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transform</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">windows</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">window</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="AbstractBaseSetbacks">
+<a class="viewcode-back" href="../../../_autosummary/reVX.setbacks.base.AbstractBaseSetbacks.html#reVX.setbacks.base.AbstractBaseSetbacks">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AbstractBaseSetbacks</span><span class="p">(</span><span class="n">AbstractBaseExclusionsMerger</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for Setbacks Calculators&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">excl_fpath</span><span class="p">,</span> <span class="n">regulations</span><span class="p">,</span> <span class="n">features</span><span class="p">,</span> <span class="n">hsds</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                 <span class="n">weights_calculation_upscale_factor</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        excl_fpath : str</span>
+<span class="sd">            Path to .h5 file containing exclusion layers, will also be</span>
+<span class="sd">            the location of any new setback layers</span>
+<span class="sd">        regulations : `~reVX.setbacks.regulations.SetbackRegulations`</span>
+<span class="sd">            A `SetbackRegulations` object used to extract setback</span>
+<span class="sd">            distances.</span>
+<span class="sd">        features : str</span>
+<span class="sd">            Path to file containing features to compute exclusions from.</span>
+<span class="sd">        hsds : bool, optional</span>
+<span class="sd">            Boolean flag to use h5pyd to handle .h5 &#39;files&#39; hosted on</span>
+<span class="sd">            AWS behind HSDS. By default `False`.</span>
+<span class="sd">        weights_calculation_upscale_factor : int, optional</span>
+<span class="sd">            If this value is an int &gt; 1, the output will be a layer with</span>
+<span class="sd">            **inclusion** weight values instead of exclusion booleans.</span>
+<span class="sd">            For example, a cell that was previously excluded with a</span>
+<span class="sd">            a boolean mask (value of 1) may instead be converted to an</span>
+<span class="sd">            inclusion weight value of 0.75, meaning that 75% of the area</span>
+<span class="sd">            corresponding to that point should be included (i.e. the</span>
+<span class="sd">            exclusion feature only intersected a small portion - 25% -</span>
+<span class="sd">            of the cell). This percentage inclusion value is calculated</span>
+<span class="sd">            by upscaling the output array using this input value,</span>
+<span class="sd">            rasterizing the exclusion features onto it, and counting the</span>
+<span class="sd">            number of resulting sub-cells excluded by the feature. For</span>
+<span class="sd">            example, setting the value to `3` would split each output</span>
+<span class="sd">            cell into nine sub-cells - 3 divisions in each dimension.</span>
+<span class="sd">            After the feature is rasterized on this high-resolution</span>
+<span class="sd">            sub-grid, the area of the non-excluded sub-cells is totaled</span>
+<span class="sd">            and divided by the area of the original cell to obtain the</span>
+<span class="sd">            final inclusion percentage. Therefore, a larger upscale</span>
+<span class="sd">            factor results in more accurate percentage values. If `None`</span>
+<span class="sd">            (or a value &lt;= 1), this process is skipped and the output is</span>
+<span class="sd">            a boolean exclusion mask. By default `None`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_rasterizer</span> <span class="o">=</span> <span class="n">Rasterizer</span><span class="p">(</span><span class="n">excl_fpath</span><span class="p">,</span>
+                                      <span class="n">weights_calculation_upscale_factor</span><span class="p">,</span> <span class="n">hsds</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">excl_fpath</span><span class="p">,</span> <span class="n">regulations</span><span class="p">,</span> <span class="n">features</span><span class="p">,</span> <span class="n">hsds</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_features_meta</span> <span class="o">=</span> <span class="n">GPKGMeta</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_features</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> for </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_excl_fpath</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">msg</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">description</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;str: Description to be added to excl H5.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> computed with a base setback distance of </span><span class="si">{}</span><span class="s1"> and a &#39;</span>
+                <span class="s1">&#39;multiplier of </span><span class="si">{}</span><span class="s1"> for a total generic setback value of </span><span class="si">{}</span><span class="s1"> &#39;</span>
+                <span class="s1">&#39;(local exclusions may differ).&#39;</span>
+                <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">,</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_regulations</span><span class="o">.</span><span class="n">base_setback_dist</span><span class="p">,</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_regulations</span><span class="o">.</span><span class="n">multiplier</span><span class="p">,</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_regulations</span><span class="o">.</span><span class="n">generic</span><span class="p">))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">no_exclusions_array</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;np.array: Array representing no exclusions. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rasterizer</span><span class="o">.</span><span class="n">rasterize</span><span class="p">(</span><span class="n">shapes</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">exclusion_merge_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;callable: Function to merge overlapping exclusion layers. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">minimum</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rasterizer</span><span class="o">.</span><span class="n">inclusions</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span>
+
+<div class="viewcode-block" id="AbstractBaseSetbacks.pre_process_regulations">
+<a class="viewcode-back" href="../../../_autosummary/reVX.setbacks.base.AbstractBaseSetbacks.html#reVX.setbacks.base.AbstractBaseSetbacks.pre_process_regulations">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">pre_process_regulations</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reduce regulations to state corresponding to features.&quot;&quot;&quot;</span>
+        <span class="n">feats_crs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_features_meta</span><span class="o">.</span><span class="n">crs</span>
+        <span class="n">xmin</span><span class="p">,</span> <span class="n">ymin</span><span class="p">,</span> <span class="n">xmax</span><span class="p">,</span> <span class="n">ymax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_features_meta</span><span class="o">.</span><span class="n">bbox</span>
+        <span class="n">regulations_df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">regulations_table</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="n">feats_crs</span><span class="p">)</span>
+        <span class="n">regulations_df</span> <span class="o">=</span> <span class="n">regulations_df</span><span class="o">.</span><span class="n">cx</span><span class="p">[</span><span class="n">xmin</span><span class="p">:</span><span class="n">xmax</span><span class="p">,</span> <span class="n">ymin</span><span class="p">:</span><span class="n">ymax</span><span class="p">]</span>
+        <span class="n">regulations_df</span> <span class="o">=</span> <span class="n">regulations_df</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="n">crs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="p">[</span><span class="s1">&#39;crs&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_regulations</span><span class="o">.</span><span class="n">df</span> <span class="o">=</span> <span class="n">regulations_df</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_regulation_table_mask</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">mask</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Found no local regulations!&quot;</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="n">warn</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_regulations</span><span class="o">.</span><span class="n">df</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">regulations_table</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+                                <span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Loaded and processed setback regulations for </span><span class="si">{}</span><span class="s1"> counties&#39;</span>
+                     <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">regulations_table</span><span class="p">)))</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_local_exclusions_arguments</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">regulation_value</span><span class="p">,</span> <span class="n">county</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compile and return arguments to `compute_local_exclusions`. &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Selecting county IDs using bounds </span><span class="si">{}</span><span class="s2">&quot;</span>
+                     <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">county</span><span class="o">.</span><span class="n">total_bounds</span><span class="p">))</span>
+        <span class="n">county</span> <span class="o">=</span> <span class="p">(</span><span class="n">county</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="n">regulation_value</span> <span class="o">*</span> <span class="mf">1.1</span><span class="p">)</span>
+                  <span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_features_meta</span><span class="o">.</span><span class="n">crs</span><span class="p">))</span>
+        <span class="n">ids</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_features_meta</span><span class="o">.</span><span class="n">feat_ids_for_bbox</span><span class="p">(</span><span class="n">county</span><span class="o">.</span><span class="n">total_bounds</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Calculating setbacks for counties with IDs </span><span class="si">{}</span><span class="s2">&quot;</span>
+                     <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ids</span><span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">start</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">ids</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">NUM_FEATURES_PER_WORKER</span><span class="p">):</span>
+            <span class="n">end</span> <span class="o">=</span> <span class="n">start</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">NUM_FEATURES_PER_WORKER</span>
+            <span class="k">yield</span> <span class="p">(</span><span class="n">ids</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">_features</span><span class="p">,</span>
+                   <span class="bp">self</span><span class="o">.</span><span class="n">_features_meta</span><span class="o">.</span><span class="n">primary_key_column</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="p">[</span><span class="s1">&#39;crs&#39;</span><span class="p">],</span>
+                   <span class="bp">self</span><span class="o">.</span><span class="n">FEATURE_FILTER_TYPE</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">BUFFER_TYPE</span><span class="p">,</span>
+                   <span class="bp">self</span><span class="o">.</span><span class="n">_rasterizer</span><span class="p">)</span>
+
+<div class="viewcode-block" id="AbstractBaseSetbacks.compute_local_exclusions">
+<a class="viewcode-back" href="../../../_autosummary/reVX.setbacks.base.AbstractBaseSetbacks.html#reVX.setbacks.base.AbstractBaseSetbacks.compute_local_exclusions">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_local_exclusions</span><span class="p">(</span><span class="n">regulation_value</span><span class="p">,</span> <span class="n">county</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute local features setbacks.</span>
+
+<span class="sd">        This method will compute the setbacks using a county-specific</span>
+<span class="sd">        regulations file that specifies either a static setback or a</span>
+<span class="sd">        multiplier value that will be used along with the base setback</span>
+<span class="sd">        distance to compute the setback.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        regulation_value : float | int</span>
+<span class="sd">            Setback distance in meters.</span>
+<span class="sd">        county : geopandas.GeoDataFrame</span>
+<span class="sd">            Regulations for a single county.</span>
+<span class="sd">        features_ids : iterable of ints</span>
+<span class="sd">            List of tuple (or other iterable) of integer values</span>
+<span class="sd">            corresponding to the ID of the features in the GeoPackage</span>
+<span class="sd">            to load and compute exclusions for. Note that these ID</span>
+<span class="sd">            values are the internal SQL table ID&#39;s stored with the</span>
+<span class="sd">            features, NOT the index of the features when loaded using</span>
+<span class="sd">            :func:`geopandas.read_file`.</span>
+<span class="sd">        features_fp : path-like</span>
+<span class="sd">            Path to the GeoPackage file containing the features to be</span>
+<span class="sd">            loaded and used for the exclusion calculation.</span>
+<span class="sd">        col : str</span>
+<span class="sd">            Namer of the primary key column in the main SQL table of the</span>
+<span class="sd">            GeoPackage. This should be the name of the column under</span>
+<span class="sd">            which the `features_ids` can be found.</span>
+<span class="sd">        crs : str</span>
+<span class="sd">            String representation of the Coordinate Reference System of</span>
+<span class="sd">            the output exclusions array.</span>
+<span class="sd">        features_filter_type : str</span>
+<span class="sd">            Key from the :attr:`FEATURE_FILTERS` dictionary that points</span>
+<span class="sd">            to the feature filter function to use. This feature filter</span>
+<span class="sd">            function filters the loaded features such that they are</span>
+<span class="sd">            localized to the county bounds.</span>
+<span class="sd">        buffer_type : str</span>
+<span class="sd">            Key from the :attr:`BUFFERS` dictionary that points to the</span>
+<span class="sd">            feature buffer function to use.</span>
+<span class="sd">        rasterizer : Rasterizer</span>
+<span class="sd">            Instance of `Rasterizer` class used to rasterize the</span>
+<span class="sd">            buffered county features.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        setbacks : ndarray</span>
+<span class="sd">            Raster array of setbacks</span>
+<span class="sd">        slices : 2-tuple of `slice`</span>
+<span class="sd">            X and Y slice objects defining where in the original array</span>
+<span class="sd">            the exclusion data should go.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="p">(</span><span class="n">features_ids</span><span class="p">,</span> <span class="n">features_fp</span><span class="p">,</span> <span class="n">col</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">features_filter_type</span><span class="p">,</span>
+         <span class="n">buffer_type</span><span class="p">,</span> <span class="n">rasterizer</span><span class="p">)</span> <span class="o">=</span> <span class="n">args</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;- Computing setbacks for:</span><span class="se">\n</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">county</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+        <span class="n">log_mem</span><span class="p">(</span><span class="n">logger</span><span class="p">)</span>
+        <span class="n">features</span> <span class="o">=</span> <span class="n">_load_features</span><span class="p">(</span><span class="n">features_ids</span><span class="p">,</span> <span class="n">features_fp</span><span class="p">,</span> <span class="n">col</span><span class="p">,</span> <span class="n">crs</span><span class="p">)</span>
+        <span class="n">feature_bounds</span> <span class="o">=</span> <span class="n">_buffered_feature_bounds</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">rasterizer</span><span class="p">,</span>
+                                                  <span class="n">regulation_value</span><span class="p">)</span>
+
+        <span class="n">features</span> <span class="o">=</span> <span class="n">FEATURE_FILTERS</span><span class="p">[</span><span class="n">features_filter_type</span><span class="p">](</span><span class="n">features</span><span class="p">,</span> <span class="n">county</span><span class="p">)</span>
+        <span class="n">features</span> <span class="o">=</span> <span class="n">BUFFERS</span><span class="p">[</span><span class="n">buffer_type</span><span class="p">](</span><span class="n">features</span><span class="p">,</span> <span class="n">regulation_value</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">_rasterize_within_window</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">feature_bounds</span><span class="p">,</span> <span class="n">rasterizer</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="AbstractBaseSetbacks.compute_generic_exclusions">
+<a class="viewcode-back" href="../../../_autosummary/reVX.setbacks.base.AbstractBaseSetbacks.html#reVX.setbacks.base.AbstractBaseSetbacks.compute_generic_exclusions">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_generic_exclusions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_workers</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute generic setbacks.</span>
+
+<span class="sd">        This method will compute the setbacks using a generic setback</span>
+<span class="sd">        of `base_setback_dist * multiplier`.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        max_workers : int, optional</span>
+<span class="sd">            Number of workers to use for exclusions computation, if 1</span>
+<span class="sd">            run in serial, if &gt; 1 run in parallel with that many</span>
+<span class="sd">            workers, if `None` run in parallel on all available cores.</span>
+<span class="sd">            By default `None`.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        setbacks : ndarray</span>
+<span class="sd">            Raster array of setbacks</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">generic_regulations_dne</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_regulations</span><span class="o">.</span><span class="n">generic</span> <span class="ow">is</span> <span class="kc">None</span>
+                                   <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_regulations</span><span class="o">.</span><span class="n">generic</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">generic_regulations_dne</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">no_exclusions_array</span>
+
+        <span class="n">max_workers</span> <span class="o">=</span> <span class="n">max_workers</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()</span>
+        <span class="n">ids</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_features_meta</span><span class="o">.</span><span class="n">feat_ids</span>
+        <span class="n">num_feats</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_features_meta</span><span class="o">.</span><span class="n">num_feats</span>
+        <span class="n">pk</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_features_meta</span><span class="o">.</span><span class="n">primary_key_column</span>
+        <span class="n">crs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="p">[</span><span class="s1">&#39;crs&#39;</span><span class="p">]</span>
+        <span class="n">exclusions</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">max_workers</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;Computing generic setbacks from </span><span class="si">{:,}</span><span class="s2"> features using </span><span class="si">{}</span><span class="s2"> &quot;</span>
+                   <span class="s2">&quot;workers&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">num_feats</span><span class="p">,</span> <span class="n">max_workers</span><span class="p">))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+            <span class="n">loggers</span> <span class="o">=</span> <span class="p">[</span><span class="vm">__name__</span><span class="p">,</span> <span class="s1">&#39;reVX&#39;</span><span class="p">,</span> <span class="s1">&#39;rex&#39;</span><span class="p">]</span>
+            <span class="n">spp_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;max_workers&quot;</span><span class="p">:</span> <span class="n">max_workers</span><span class="p">,</span> <span class="s2">&quot;loggers&quot;</span><span class="p">:</span> <span class="n">loggers</span><span class="p">}</span>
+            <span class="k">with</span> <span class="n">SpawnProcessPool</span><span class="p">(</span><span class="o">**</span><span class="n">spp_kwargs</span><span class="p">)</span> <span class="k">as</span> <span class="n">exe</span><span class="p">:</span>
+                <span class="n">exclusions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_generic_exclusions_in_chunks</span><span class="p">(</span>
+                    <span class="n">exe</span><span class="p">,</span> <span class="n">max_workers</span><span class="p">,</span> <span class="n">ids</span><span class="p">,</span> <span class="n">pk</span><span class="p">,</span> <span class="n">crs</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Computing generic setbacks from </span><span class="si">{}</span><span class="s2"> features in &quot;</span>
+                        <span class="s2">&quot;serial.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">num_feats</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">start</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">ids</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">NUM_FEATURES_PER_WORKER</span><span class="p">):</span>
+                <span class="n">end</span> <span class="o">=</span> <span class="n">start</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">NUM_FEATURES_PER_WORKER</span>
+                <span class="n">out</span> <span class="o">=</span> <span class="n">_compute_exclusions</span><span class="p">(</span><span class="n">ids</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">_features</span><span class="p">,</span> <span class="n">pk</span><span class="p">,</span>
+                                          <span class="n">crs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">BUFFER_TYPE</span><span class="p">,</span>
+                                          <span class="bp">self</span><span class="o">.</span><span class="n">_regulations</span><span class="o">.</span><span class="n">generic</span><span class="p">,</span>
+                                          <span class="bp">self</span><span class="o">.</span><span class="n">_rasterizer</span><span class="p">)</span>
+                <span class="n">new_exclusions</span><span class="p">,</span> <span class="n">slices</span> <span class="o">=</span> <span class="n">out</span>
+                <span class="n">exclusions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_combine_exclusions</span><span class="p">(</span><span class="n">exclusions</span><span class="p">,</span>
+                                                      <span class="n">new_exclusions</span><span class="p">,</span>
+                                                      <span class="n">slices</span><span class="o">=</span><span class="n">slices</span><span class="p">)</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;Computed generic setbacks for </span><span class="si">{:,}</span><span class="s2">/</span><span class="si">{:,}</span><span class="s2"> features&quot;</span>
+                       <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">end</span><span class="p">,</span> <span class="n">num_feats</span><span class="p">))</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">exclusions</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">exclusions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">no_exclusions_array</span>
+
+        <span class="k">return</span> <span class="n">exclusions</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_generic_exclusions_in_chunks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exe</span><span class="p">,</span> <span class="n">max_submissions</span><span class="p">,</span>
+                                              <span class="n">ids</span><span class="p">,</span> <span class="n">pk</span><span class="p">,</span> <span class="n">crs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute exclusions in parallel using futures. &quot;&quot;&quot;</span>
+        <span class="n">futures</span><span class="p">,</span> <span class="n">exclusions</span> <span class="o">=</span> <span class="p">{},</span> <span class="kc">None</span>
+
+        <span class="n">futures</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">start_inds</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">ids</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">NUM_FEATURES_PER_WORKER</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">ind</span><span class="p">,</span> <span class="n">start</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">start_inds</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+            <span class="n">end</span> <span class="o">=</span> <span class="n">start</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">NUM_FEATURES_PER_WORKER</span>
+            <span class="n">future</span> <span class="o">=</span> <span class="n">exe</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">_compute_exclusions</span><span class="p">,</span> <span class="n">ids</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">],</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">_features</span><span class="p">,</span> <span class="n">pk</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">BUFFER_TYPE</span><span class="p">,</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">_regulations</span><span class="o">.</span><span class="n">generic</span><span class="p">,</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">_rasterizer</span><span class="p">)</span>
+            <span class="n">futures</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">future</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">ind</span> <span class="o">%</span> <span class="n">max_submissions</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">exclusions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collect_ge_futures</span><span class="p">(</span><span class="n">futures</span><span class="p">,</span> <span class="n">exclusions</span><span class="p">)</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;Computed generic setbacks for </span><span class="si">{:,}</span><span class="s2">/</span><span class="si">{:,}</span><span class="s2"> features&quot;</span>
+                       <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">end</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">ids</span><span class="p">)))</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="n">exclusions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collect_ge_futures</span><span class="p">(</span><span class="n">futures</span><span class="p">,</span> <span class="n">exclusions</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">exclusions</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_collect_ge_futures</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">futures</span><span class="p">,</span> <span class="n">exclusions</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Collect all futures from the input dictionary. &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Collecting </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">futures</span><span class="p">)</span><span class="si">}</span><span class="s2"> futures...&quot;</span><span class="p">)</span>
+        <span class="n">log_mem</span><span class="p">(</span><span class="n">logger</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">future</span> <span class="ow">in</span> <span class="n">as_completed</span><span class="p">(</span><span class="n">futures</span><span class="p">):</span>
+            <span class="n">new_exclusions</span><span class="p">,</span> <span class="n">slices</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+            <span class="n">exclusions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_combine_exclusions</span><span class="p">(</span><span class="n">exclusions</span><span class="p">,</span>
+                                                  <span class="n">new_exclusions</span><span class="p">,</span>
+                                                  <span class="n">slices</span><span class="o">=</span><span class="n">slices</span><span class="p">)</span>
+        <span class="n">futures</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Finished collecting futures chunk!&quot;</span><span class="p">)</span>
+        <span class="n">log_mem</span><span class="p">(</span><span class="n">logger</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">exclusions</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_regulation_table_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the regulation table mask for setback feature. &quot;&quot;&quot;</span>
+        <span class="n">features</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">regulations_table</span><span class="p">[</span><span class="s1">&#39;Feature Type&#39;</span><span class="p">]</span>
+                    <span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">FEATURE_TYPES</span><span class="p">))</span>
+        <span class="n">not_excluded</span> <span class="o">=</span> <span class="o">~</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">regulations_table</span><span class="p">[</span><span class="s1">&#39;Feature Subtype&#39;</span><span class="p">]</span>
+                         <span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">FEATURE_SUBTYPES_TO_EXCLUDE</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">features</span> <span class="o">&amp;</span> <span class="n">not_excluded</span>
+
+    <span class="nd">@property</span>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">FEATURE_TYPES</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;set: Feature type names using in the regulations file. &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+    <span class="nd">@property</span>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">FEATURE_SUBTYPES_TO_EXCLUDE</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;set: Feature subtype names to exclude from regulations file. &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+    <span class="nd">@property</span>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">BUFFER_TYPE</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;str: Key in `BUFFERS` pointing to buffer to use. &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+    <span class="nd">@property</span>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">FEATURE_FILTER_TYPE</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;str: Key in `FEATURE_FILTERS` pointing to feature filter to use. &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+    <span class="nd">@property</span>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">NUM_FEATURES_PER_WORKER</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;int: Number of features each worker processes at one time. &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_parse_excl_properties</span><span class="p">(</span><span class="n">excl_fpath</span><span class="p">,</span> <span class="n">hsds</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse shape, chunk size, and profile from exclusions file.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    excl_fpath : str</span>
+<span class="sd">        Path to .h5 file containing exclusion layers, will also be</span>
+<span class="sd">        the location of any new setback layers</span>
+<span class="sd">    hsds : bool, optional</span>
+<span class="sd">        Boolean flag to use h5pyd to handle .h5 &#39;files&#39; hosted on</span>
+<span class="sd">        AWS behind HSDS. By default `False`.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    shape : tuple</span>
+<span class="sd">        Shape of exclusions datasets</span>
+<span class="sd">    profile : str</span>
+<span class="sd">        GeoTiff profile for exclusions datasets</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="n">ExclusionLayers</span><span class="p">(</span><span class="n">excl_fpath</span><span class="p">,</span> <span class="n">hsds</span><span class="o">=</span><span class="n">hsds</span><span class="p">)</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+        <span class="n">dset_shape</span> <span class="o">=</span> <span class="n">exc</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">profile</span> <span class="o">=</span> <span class="n">exc</span><span class="o">.</span><span class="n">profile</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">dset_shape</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="n">dset_shape</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="p">)</span> <span class="o">+</span> <span class="n">dset_shape</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Exclusions properties:</span><span class="se">\n</span><span class="s1">&#39;</span>
+                 <span class="s1">&#39;shape : </span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span>
+                 <span class="s1">&#39;profile : </span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span>
+                 <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dset_shape</span><span class="p">,</span> <span class="n">profile</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">dset_shape</span><span class="p">,</span> <span class="n">profile</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_load_features</span><span class="p">(</span><span class="n">features_ids</span><span class="p">,</span> <span class="n">features_fp</span><span class="p">,</span> <span class="n">col</span><span class="p">,</span> <span class="n">crs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load the `features_ids` from the `features_fp`. &quot;&quot;&quot;</span>
+    <span class="n">ids</span> <span class="o">=</span> <span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">features_ids</span><span class="p">))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;  Loading </span><span class="si">{}</span><span class="s2"> features from </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">features_ids</span><span class="p">),</span>
+                                                        <span class="n">features_fp</span><span class="p">))</span>
+    <span class="n">features</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">read_file</span><span class="p">(</span><span class="n">features_fp</span><span class="p">,</span>
+                             <span class="n">where</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> in (</span><span class="si">{}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="n">ids</span><span class="p">),</span>
+                             <span class="n">engine</span><span class="o">=</span><span class="s2">&quot;pyogrio&quot;</span><span class="p">)</span>
+    <span class="n">features</span> <span class="o">=</span> <span class="n">features</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="n">crs</span><span class="o">=</span><span class="n">crs</span><span class="p">)</span>
+    <span class="n">features</span><span class="p">[</span><span class="s2">&quot;geometry&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">features</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">_make_row_shape_valid</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Loaded </span><span class="si">{}</span><span class="s2"> features&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">features</span><span class="p">)))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Features total bounds: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">features</span><span class="o">.</span><span class="n">total_bounds</span><span class="p">))</span>
+    <span class="n">log_mem</span><span class="p">(</span><span class="n">logger</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">features</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_make_row_shape_valid</span><span class="p">(</span><span class="n">row</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Make a row shape valid using shapely `make_valid`&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">unary_union</span><span class="p">(</span><span class="n">make_valid</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;geometry&quot;</span><span class="p">]))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_compute_exclusions</span><span class="p">(</span><span class="n">features_ids</span><span class="p">,</span> <span class="n">features_fp</span><span class="p">,</span> <span class="n">col</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">buffer_type</span><span class="p">,</span>
+                        <span class="n">setback</span><span class="p">,</span> <span class="n">rasterizer</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute exclusions by loading features, buffering, and rasterizing. &quot;&quot;&quot;</span>
+    <span class="n">setbacks</span><span class="p">,</span> <span class="n">feature_bounds</span> <span class="o">=</span> <span class="n">_load_and_buffer</span><span class="p">(</span><span class="n">features_ids</span><span class="p">,</span> <span class="n">features_fp</span><span class="p">,</span>
+                                                <span class="n">col</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">buffer_type</span><span class="p">,</span>
+                                                <span class="n">setback</span><span class="p">,</span> <span class="n">rasterizer</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">setbacks</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+
+    <span class="k">return</span> <span class="n">_rasterize_within_window</span><span class="p">(</span><span class="n">setbacks</span><span class="p">,</span> <span class="n">feature_bounds</span><span class="p">,</span> <span class="n">rasterizer</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_load_and_buffer</span><span class="p">(</span><span class="n">features_ids</span><span class="p">,</span> <span class="n">features_fp</span><span class="p">,</span> <span class="n">col</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">buffer_type</span><span class="p">,</span>
+                     <span class="n">setback</span><span class="p">,</span> <span class="n">rasterizer</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load features and immediately buffer them.</span>
+
+<span class="sd">    The intention is to keep loading and buffering in one function so</span>
+<span class="sd">    that large sets of features get dropped immediately instead of</span>
+<span class="sd">    hanging in memory during rasterization.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">features</span> <span class="o">=</span> <span class="n">_load_features</span><span class="p">(</span><span class="n">features_ids</span><span class="p">,</span> <span class="n">features_fp</span><span class="p">,</span> <span class="n">col</span><span class="p">,</span> <span class="n">crs</span><span class="p">)</span>
+    <span class="n">excl_array_bbox</span> <span class="o">=</span> <span class="n">transform</span><span class="o">.</span><span class="n">array_bounds</span><span class="p">(</span><span class="o">*</span><span class="n">rasterizer</span><span class="o">.</span><span class="n">arr_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span>
+                                             <span class="n">rasterizer</span><span class="o">.</span><span class="n">transform</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">coords</span><span class="o">.</span><span class="n">disjoint_bounds</span><span class="p">(</span><span class="n">excl_array_bbox</span><span class="p">,</span> <span class="n">features</span><span class="o">.</span><span class="n">total_bounds</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Buffering </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">features</span><span class="p">)</span><span class="si">}</span><span class="s2"> features...&quot;</span><span class="p">)</span>
+    <span class="n">setbacks</span> <span class="o">=</span> <span class="n">BUFFERS</span><span class="p">[</span><span class="n">buffer_type</span><span class="p">](</span><span class="n">features</span><span class="p">,</span> <span class="n">setback</span><span class="p">)</span>
+    <span class="n">feature_bounds</span> <span class="o">=</span> <span class="n">_buffered_feature_bounds</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">rasterizer</span><span class="p">,</span> <span class="n">setback</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">setbacks</span><span class="p">,</span> <span class="n">feature_bounds</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_buffered_feature_bounds</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">rasterizer</span><span class="p">,</span> <span class="n">regulation_value</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate the buffered feature bounds&quot;&quot;&quot;</span>
+    <span class="n">buffer_len</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">rasterizer</span><span class="o">.</span><span class="n">transform</span><span class="o">.</span><span class="n">a</span><span class="p">),</span> <span class="nb">abs</span><span class="p">(</span><span class="n">rasterizer</span><span class="o">.</span><span class="n">transform</span><span class="o">.</span><span class="n">e</span><span class="p">))</span>
+    <span class="n">bound_buffer</span> <span class="o">=</span> <span class="n">regulation_value</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">buffer_len</span>
+    <span class="k">return</span> <span class="n">features</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="n">bound_buffer</span><span class="p">)</span><span class="o">.</span><span class="n">total_bounds</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_rasterize_within_window</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">rasterizer</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Rasterize the features using the geoseries bounding box as a window. &quot;&quot;&quot;</span>
+    <span class="n">window</span> <span class="o">=</span> <span class="n">_cropped_window</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="n">rasterizer</span><span class="o">.</span><span class="n">transform</span><span class="p">,</span>
+                             <span class="n">rasterizer</span><span class="o">.</span><span class="n">arr_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Rasterizing </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">features</span><span class="p">)</span><span class="si">}</span><span class="s2"> features using </span><span class="si">{</span><span class="n">window</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">exclusions</span> <span class="o">=</span> <span class="n">rasterizer</span><span class="o">.</span><span class="n">rasterize</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="n">window</span><span class="p">)</span>
+    <span class="n">log_mem</span><span class="p">(</span><span class="n">logger</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Exclusion mem size: </span><span class="si">{</span><span class="n">exclusions</span><span class="o">.</span><span class="n">nbytes</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1048576</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">MB&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">exclusions</span><span class="p">,</span> <span class="n">window</span><span class="o">.</span><span class="n">toslices</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_cropped_window</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="n">raster_transform</span><span class="p">,</span> <span class="n">shape</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate the raster array window corresponding to the bounding box.&quot;&quot;&quot;</span>
+    <span class="n">left</span><span class="p">,</span> <span class="n">bottom</span><span class="p">,</span> <span class="n">right</span><span class="p">,</span> <span class="n">top</span> <span class="o">=</span> <span class="n">bounds</span>
+
+    <span class="n">rows</span><span class="p">,</span> <span class="n">cols</span> <span class="o">=</span> <span class="n">transform</span><span class="o">.</span><span class="n">rowcol</span><span class="p">(</span><span class="n">raster_transform</span><span class="p">,</span>
+                                  <span class="p">[</span><span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">,</span> <span class="n">right</span><span class="p">,</span> <span class="n">left</span><span class="p">],</span>
+                                  <span class="p">[</span><span class="n">top</span><span class="p">,</span> <span class="n">top</span><span class="p">,</span> <span class="n">bottom</span><span class="p">,</span> <span class="n">bottom</span><span class="p">],</span>
+                                  <span class="n">op</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+
+    <span class="n">row_start</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">floor</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">rows</span><span class="p">)),</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">col_start</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">floor</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">cols</span><span class="p">)),</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">row_stop</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">ceil</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">rows</span><span class="p">)),</span> <span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">col_stop</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">ceil</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">cols</span><span class="p">)),</span> <span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">windows</span><span class="o">.</span><span class="n">Window</span><span class="p">(</span><span class="n">col_off</span><span class="o">=</span><span class="n">col_start</span><span class="p">,</span> <span class="n">row_off</span><span class="o">=</span><span class="n">row_start</span><span class="p">,</span>
+                          <span class="n">width</span><span class="o">=</span><span class="nb">max</span><span class="p">(</span><span class="n">col_stop</span> <span class="o">-</span> <span class="n">col_start</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+                          <span class="n">height</span><span class="o">=</span><span class="nb">max</span><span class="p">(</span><span class="n">row_stop</span> <span class="o">-</span> <span class="n">row_start</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, Alliance for Sustainable Energy, LLC.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

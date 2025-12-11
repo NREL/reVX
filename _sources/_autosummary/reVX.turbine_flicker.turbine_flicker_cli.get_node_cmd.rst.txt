@@ -1,0 +1,6 @@
+reVX.turbine\_flicker.turbine\_flicker\_cli.get\_node\_cmd
+==========================================================
+
+.. currentmodule:: reVX.turbine_flicker.turbine_flicker_cli
+
+.. autofunction:: get_node_cmd

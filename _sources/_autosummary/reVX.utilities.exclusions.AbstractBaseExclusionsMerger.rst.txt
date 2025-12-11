@@ -1,0 +1,38 @@
+reVX.utilities.exclusions.AbstractBaseExclusionsMerger
+======================================================
+
+.. currentmodule:: reVX.utilities.exclusions
+
+.. autoclass:: AbstractBaseExclusionsMerger
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~AbstractBaseExclusionsMerger.compute_all_local_exclusions
+      ~AbstractBaseExclusionsMerger.compute_exclusions
+      ~AbstractBaseExclusionsMerger.compute_generic_exclusions
+      ~AbstractBaseExclusionsMerger.compute_local_exclusions
+      ~AbstractBaseExclusionsMerger.pre_process_regulations
+      ~AbstractBaseExclusionsMerger.run
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~AbstractBaseExclusionsMerger.exclusion_merge_func
+      ~AbstractBaseExclusionsMerger.no_exclusions_array
+      ~AbstractBaseExclusionsMerger.profile
+      ~AbstractBaseExclusionsMerger.regulations_table
+   
+   

@@ -1,0 +1,6 @@
+reVX.hybrid\_stats.hybrid\_stats.spearman\_correlation
+======================================================
+
+.. currentmodule:: reVX.hybrid_stats.hybrid_stats
+
+.. autofunction:: spearman_correlation

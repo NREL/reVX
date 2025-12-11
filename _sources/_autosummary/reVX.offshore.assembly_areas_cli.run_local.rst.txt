@@ -1,0 +1,6 @@
+reVX.offshore.assembly\_areas\_cli.run\_local
+=============================================
+
+.. currentmodule:: reVX.offshore.assembly_areas_cli
+
+.. autofunction:: run_local

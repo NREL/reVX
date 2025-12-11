@@ -1,0 +1,40 @@
+reVX.handlers.layered\_h5
+=========================
+
+.. automodule:: reVX.handlers.layered_h5
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+   
+      check_geotiff
+      crs_match
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+   
+      LayeredH5
+      LayeredTransmissionH5
+   
+   
+
+   
+   
+   
+
+
+

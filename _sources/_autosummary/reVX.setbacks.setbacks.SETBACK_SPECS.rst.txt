@@ -1,0 +1,6 @@
+reVX.setbacks.setbacks.SETBACK\_SPECS
+=====================================
+
+.. currentmodule:: reVX.setbacks.setbacks
+
+.. autodata:: SETBACK_SPECS

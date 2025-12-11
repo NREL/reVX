@@ -1,0 +1,38 @@
+reVX.setbacks.setbacks\_converter
+=================================
+
+.. automodule:: reVX.setbacks.setbacks_converter
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+   
+      parse_setbacks
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+   
+      SetbacksConverter
+   
+   
+
+   
+   
+   
+
+
+

@@ -1,0 +1,26 @@
+reVX.rpm.rpm\_output.RepresentativeProfiles
+===========================================
+
+.. currentmodule:: reVX.rpm.rpm_output
+
+.. autoclass:: RepresentativeProfiles
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~RepresentativeProfiles.export_profiles
+      ~RepresentativeProfiles.export_single_profile
+      ~RepresentativeProfiles.process_forecast_clusters
+   
+   
+
+   
+   
+   

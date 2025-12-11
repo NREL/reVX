@@ -1,0 +1,6 @@
+reVX.least\_cost\_xmission.least\_cost\_xmission\_cli.run\_local
+================================================================
+
+.. currentmodule:: reVX.least_cost_xmission.least_cost_xmission_cli
+
+.. autofunction:: run_local

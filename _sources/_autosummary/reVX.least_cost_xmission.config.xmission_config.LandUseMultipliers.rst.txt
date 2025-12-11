@@ -1,0 +1,44 @@
+reVX.least\_cost\_xmission.config.xmission\_config.LandUseMultipliers
+=====================================================================
+
+.. currentmodule:: reVX.least_cost_xmission.config.xmission_config
+
+.. autoclass:: LandUseMultipliers
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~LandUseMultipliers.clear
+      ~LandUseMultipliers.copy
+      ~LandUseMultipliers.fromkeys
+      ~LandUseMultipliers.get
+      ~LandUseMultipliers.items
+      ~LandUseMultipliers.keys
+      ~LandUseMultipliers.pop
+      ~LandUseMultipliers.popitem
+      ~LandUseMultipliers.setdefault
+      ~LandUseMultipliers.update
+      ~LandUseMultipliers.values
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~LandUseMultipliers.cropland
+      ~LandUseMultipliers.forest
+      ~LandUseMultipliers.suburban
+      ~LandUseMultipliers.urban
+      ~LandUseMultipliers.wetland
+   
+   

@@ -1,0 +1,58 @@
+reVX.config.reeds.ProfilesConfigGroup
+=====================================
+
+.. currentmodule:: reVX.config.reeds
+
+.. autoclass:: ProfilesConfigGroup
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ProfilesConfigGroup.check_files
+      ~ProfilesConfigGroup.check_overwrite_keys
+      ~ProfilesConfigGroup.clear
+      ~ProfilesConfigGroup.copy
+      ~ProfilesConfigGroup.fromkeys
+      ~ProfilesConfigGroup.get
+      ~ProfilesConfigGroup.items
+      ~ProfilesConfigGroup.keys
+      ~ProfilesConfigGroup.pop
+      ~ProfilesConfigGroup.popitem
+      ~ProfilesConfigGroup.resolve_path
+      ~ProfilesConfigGroup.set_self_dict
+      ~ProfilesConfigGroup.setdefault
+      ~ProfilesConfigGroup.str_replace_and_resolve
+      ~ProfilesConfigGroup.update
+      ~ProfilesConfigGroup.values
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~ProfilesConfigGroup.REQUIREMENTS
+      ~ProfilesConfigGroup.STR_REP
+      ~ProfilesConfigGroup.cf_profiles
+      ~ProfilesConfigGroup.config_dir
+      ~ProfilesConfigGroup.config_keys
+      ~ProfilesConfigGroup.err_method
+      ~ProfilesConfigGroup.log_level
+      ~ProfilesConfigGroup.n_profiles
+      ~ProfilesConfigGroup.name
+      ~ProfilesConfigGroup.profiles_dset
+      ~ProfilesConfigGroup.reeds_table
+      ~ProfilesConfigGroup.reg_cols
+      ~ProfilesConfigGroup.rep_method
+      ~ProfilesConfigGroup.weight
+   
+   

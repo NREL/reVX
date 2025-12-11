@@ -1,0 +1,57 @@
+reVX.config.reeds.ReedsConfig
+=============================
+
+.. currentmodule:: reVX.config.reeds
+
+.. autoclass:: ReedsConfig
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ReedsConfig.check_files
+      ~ReedsConfig.check_overwrite_keys
+      ~ReedsConfig.clear
+      ~ReedsConfig.copy
+      ~ReedsConfig.fromkeys
+      ~ReedsConfig.get
+      ~ReedsConfig.items
+      ~ReedsConfig.keys
+      ~ReedsConfig.pop
+      ~ReedsConfig.popitem
+      ~ReedsConfig.resolve_path
+      ~ReedsConfig.set_self_dict
+      ~ReedsConfig.setdefault
+      ~ReedsConfig.str_replace_and_resolve
+      ~ReedsConfig.update
+      ~ReedsConfig.values
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~ReedsConfig.NAME
+      ~ReedsConfig.REQUIREMENTS
+      ~ReedsConfig.STR_REP
+      ~ReedsConfig.analysis_years
+      ~ReedsConfig.classify
+      ~ReedsConfig.config_dir
+      ~ReedsConfig.config_keys
+      ~ReedsConfig.execution_control
+      ~ReedsConfig.log_directory
+      ~ReedsConfig.log_level
+      ~ReedsConfig.name
+      ~ReedsConfig.profiles
+      ~ReedsConfig.timeslices
+   
+   

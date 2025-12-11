@@ -1,0 +1,33 @@
+reVX.utilities.reeds\_cols
+==========================
+
+.. automodule:: reVX.utilities.reeds_cols
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+   
+      add_county_info
+      add_extra_data
+      add_nrel_regions
+      add_reeds_columns
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

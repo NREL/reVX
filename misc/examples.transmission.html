@@ -1,0 +1,1310 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>reVX LCP &mdash; reVX 0.5.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=e1a677a5"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="reVX" href="../_autosummary/reVX.html" />
+    <link rel="prev" title="reVX Setbacks" href="examples.setbacks.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            reVX
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Home page</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_usage.html">Installation and Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#recommended-citation">Recommended Citation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#command-line-tools">Command Line Tools</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="examples.html">Examples</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="examples.rpm.html">Resource Planning Model (RPM)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="examples.rpm.html#rev-rpm-cli">reV-RPM CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="examples.rpm.html#rpm-sub-package">RPM sub-package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="examples.setbacks.html">reVX Setbacks</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="examples.setbacks.html#computing-setbacks-for-conus">Computing setbacks for CONUS</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="examples.setbacks.html#ordinance-database">Ordinance database</a></li>
+<li class="toctree-l4"><a class="reference internal" href="examples.setbacks.html#config-file-setup">Config file setup</a></li>
+<li class="toctree-l4"><a class="reference internal" href="examples.setbacks.html#execution">Execution</a></li>
+<li class="toctree-l4"><a class="reference internal" href="examples.setbacks.html#merging">Merging</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="examples.setbacks.html#advanced-topics">Advanced Topics</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="examples.setbacks.html#partial-setbacks">Partial Setbacks</a></li>
+<li class="toctree-l4"><a class="reference internal" href="examples.setbacks.html#writing-directly-to-hdf5-files">Writing directly to HDF5 files</a></li>
+<li class="toctree-l4"><a class="reference internal" href="examples.setbacks.html#feature-specific-generic-multipliers">Feature-specific generic multipliers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="examples.setbacks.html#custom-setbacks-computations">Custom setbacks computations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="examples.setbacks.html#batched-execution">Batched execution</a></li>
+<li class="toctree-l4"><a class="reference internal" href="examples.setbacks.html#job-status">Job Status</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">reVX LCP</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#h5-layer-file-creation">H5 Layer File Creation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#masks">Masks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#layer-creation-configuration-file">Layer Creation Configuration File</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#required-keys">Required Keys</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#optional-keys">Optional Keys</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#action-keys">Action Keys</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#layer-creation-config-file-examples">Layer Creation Config File Examples</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#running-the-layer-creator">Running the Layer Creator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#conus-onshore-example">CONUS (Onshore) Example</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#costs">Costs</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#reinforced-transmission">Reinforced Transmission</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#key-assumptions-under-this-approach">Key assumptions under this approach:</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#substation-connections-only-old">Substation connections only (OLD)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#substation-and-tie-line-connections-new">Substation and tie-line connections (New)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#offshore-least-cost-paths">Offshore Least Cost Paths</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#nomenclature-note">Nomenclature Note</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#offshore-workflow">Offshore Workflow</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#offshore-examples">Offshore Examples</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../_autosummary/reVX.html">API reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../_autosummary/reVX.cli.html">reVX.cli</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../_autosummary/reVX.config.html">reVX.config</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.config.least_cost_xmission.html">reVX.config.least_cost_xmission</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.config.least_cost_xmission.LeastCostPathsConfig.html">reVX.config.least_cost_xmission.LeastCostPathsConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.config.least_cost_xmission.LeastCostXmissionConfig.html">reVX.config.least_cost_xmission.LeastCostXmissionConfig</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.config.offshore.html">reVX.config.offshore</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.config.offshore.AssemblyAreasConfig.html">reVX.config.offshore.AssemblyAreasConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.config.offshore.DistToPortsConfig.html">reVX.config.offshore.DistToPortsConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.config.offshore.OffshoreInputsConfig.html">reVX.config.offshore.OffshoreInputsConfig</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.config.reeds.html">reVX.config.reeds</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.config.reeds.ClassifyConfigGroup.html">reVX.config.reeds.ClassifyConfigGroup</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.config.reeds.ProfilesConfigGroup.html">reVX.config.reeds.ProfilesConfigGroup</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.config.reeds.ReedsConfig.html">reVX.config.reeds.ReedsConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.config.reeds.TimeslicesConfigGroup.html">reVX.config.reeds.TimeslicesConfigGroup</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.config.rpm.html">reVX.config.rpm</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.config.rpm.ClusterConfigGroup.html">reVX.config.rpm.ClusterConfigGroup</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.config.rpm.RPMConfig.html">reVX.config.rpm.RPMConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.config.rpm.RepProfilesConfigGroup.html">reVX.config.rpm.RepProfilesConfigGroup</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.config.transmission_layer_creation.html">reVX.config.transmission_layer_creation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.config.transmission_layer_creation.LayerBuildComponents.html">reVX.config.transmission_layer_creation.LayerBuildComponents</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.config.transmission_layer_creation.Layers.html">reVX.config.transmission_layer_creation.Layers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.config.transmission_layer_creation.DryCosts.html">reVX.config.transmission_layer_creation.DryCosts</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.config.transmission_layer_creation.LayerBuildConfig.html">reVX.config.transmission_layer_creation.LayerBuildConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.config.transmission_layer_creation.LayerConfig.html">reVX.config.transmission_layer_creation.LayerConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.config.transmission_layer_creation.MergeFrictionBarriers.html">reVX.config.transmission_layer_creation.MergeFrictionBarriers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.config.transmission_layer_creation.RangeConfig.html">reVX.config.transmission_layer_creation.RangeConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.config.transmission_layer_creation.Rasterize.html">reVX.config.transmission_layer_creation.Rasterize</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.config.transmission_layer_creation.TransmissionLayerCreationConfig.html">reVX.config.transmission_layer_creation.TransmissionLayerCreationConfig</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.config.turbine_flicker.html">reVX.config.turbine_flicker</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.config.turbine_flicker.TurbineFlickerConfig.html">reVX.config.turbine_flicker.TurbineFlickerConfig</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.config.wind_dirs.html">reVX.config.wind_dirs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.config.wind_dirs.MeanWindDirsConfig.html">reVX.config.wind_dirs.MeanWindDirsConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.config.wind_dirs.ProminentWindDirsConfig.html">reVX.config.wind_dirs.ProminentWindDirsConfig</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../_autosummary/reVX.handlers.html">reVX.handlers</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.handlers.database.html">reVX.handlers.database</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.handlers.database.Database.html">reVX.handlers.database.Database</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.handlers.geopackage.html">reVX.handlers.geopackage</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.handlers.geopackage.GPKGMeta.html">reVX.handlers.geopackage.GPKGMeta</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.handlers.geotiff.html">reVX.handlers.geotiff</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.handlers.geotiff.Geotiff.html">reVX.handlers.geotiff.Geotiff</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.handlers.layered_h5.html">reVX.handlers.layered_h5</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.handlers.layered_h5.check_geotiff.html">reVX.handlers.layered_h5.check_geotiff</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.handlers.layered_h5.crs_match.html">reVX.handlers.layered_h5.crs_match</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.handlers.layered_h5.LayeredH5.html">reVX.handlers.layered_h5.LayeredH5</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.handlers.layered_h5.LayeredTransmissionH5.html">reVX.handlers.layered_h5.LayeredTransmissionH5</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.handlers.outputs.html">reVX.handlers.outputs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.handlers.outputs.Outputs.html">reVX.handlers.outputs.Outputs</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.handlers.sc_points.html">reVX.handlers.sc_points</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.handlers.sc_points.Point.html">reVX.handlers.sc_points.Point</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.handlers.sc_points.SupplyCurvePoints.html">reVX.handlers.sc_points.SupplyCurvePoints</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../_autosummary/reVX.hybrid_stats.html">reVX.hybrid_stats</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.hybrid_stats.hybrid_stats.html">reVX.hybrid_stats.hybrid_stats</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.hybrid_stats.hybrid_stats.kendall_tau.html">reVX.hybrid_stats.hybrid_stats.kendall_tau</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.hybrid_stats.hybrid_stats.pearson_correlation.html">reVX.hybrid_stats.hybrid_stats.pearson_correlation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.hybrid_stats.hybrid_stats.spearman_correlation.html">reVX.hybrid_stats.hybrid_stats.spearman_correlation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.hybrid_stats.hybrid_stats.HybridCrossCorrelation.html">reVX.hybrid_stats.hybrid_stats.HybridCrossCorrelation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.hybrid_stats.hybrid_stats.HybridStabilityCoefficient.html">reVX.hybrid_stats.hybrid_stats.HybridStabilityCoefficient</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.hybrid_stats.hybrid_stats.HybridStats.html">reVX.hybrid_stats.hybrid_stats.HybridStats</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.hybrid_stats.temporal_agg.html">reVX.hybrid_stats.temporal_agg</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.hybrid_stats.temporal_agg.get_time_index.html">reVX.hybrid_stats.temporal_agg.get_time_index</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.hybrid_stats.temporal_agg.DatasetAgg.html">reVX.hybrid_stats.temporal_agg.DatasetAgg</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.hybrid_stats.temporal_agg.TemporalAgg.html">reVX.hybrid_stats.temporal_agg.TemporalAgg</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../_autosummary/reVX.least_cost_xmission.html">reVX.least_cost_xmission</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.least_cost_xmission.config.html">reVX.least_cost_xmission.config</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.least_cost_xmission.config.constants.html">reVX.least_cost_xmission.config.constants</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.least_cost_xmission.config.xmission_config.html">reVX.least_cost_xmission.config.xmission_config</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.least_cost_xmission.layers.html">reVX.least_cost_xmission.layers</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.least_cost_xmission.layers.base.html">reVX.least_cost_xmission.layers.base</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.least_cost_xmission.layers.dry_cost_creator.html">reVX.least_cost_xmission.layers.dry_cost_creator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.least_cost_xmission.layers.layer_creator.html">reVX.least_cost_xmission.layers.layer_creator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.least_cost_xmission.layers.masks.html">reVX.least_cost_xmission.layers.masks</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.least_cost_xmission.layers.utils.html">reVX.least_cost_xmission.layers.utils</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.least_cost_xmission.least_cost_paths.html">reVX.least_cost_xmission.least_cost_paths</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.least_cost_xmission.least_cost_paths.min_reinforcement_costs.html">reVX.least_cost_xmission.least_cost_paths.min_reinforcement_costs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.least_cost_xmission.least_cost_paths.LeastCostPaths.html">reVX.least_cost_xmission.least_cost_paths.LeastCostPaths</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.least_cost_xmission.least_cost_paths.ReinforcementPaths.html">reVX.least_cost_xmission.least_cost_paths.ReinforcementPaths</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.least_cost_xmission.least_cost_paths_cli.html">reVX.least_cost_xmission.least_cost_paths_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.least_cost_xmission.least_cost_paths_cli.eagle.html">reVX.least_cost_xmission.least_cost_paths_cli.eagle</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.least_cost_xmission.least_cost_paths_cli.get_node_cmd.html">reVX.least_cost_xmission.least_cost_paths_cli.get_node_cmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.least_cost_xmission.least_cost_paths_cli.run_local.html">reVX.least_cost_xmission.least_cost_paths_cli.run_local</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.least_cost_xmission.least_cost_xmission.html">reVX.least_cost_xmission.least_cost_xmission</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.least_cost_xmission.least_cost_xmission.region_mapper.html">reVX.least_cost_xmission.least_cost_xmission.region_mapper</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.least_cost_xmission.least_cost_xmission.LeastCostXmission.html">reVX.least_cost_xmission.least_cost_xmission.LeastCostXmission</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.least_cost_xmission.least_cost_xmission.RegionalXmission.html">reVX.least_cost_xmission.least_cost_xmission.RegionalXmission</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.least_cost_xmission.least_cost_xmission_cli.html">reVX.least_cost_xmission.least_cost_xmission_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.least_cost_xmission.least_cost_xmission_cli.eagle.html">reVX.least_cost_xmission.least_cost_xmission_cli.eagle</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.least_cost_xmission.least_cost_xmission_cli.get_node_cmd.html">reVX.least_cost_xmission.least_cost_xmission_cli.get_node_cmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.least_cost_xmission.least_cost_xmission_cli.run_local.html">reVX.least_cost_xmission.least_cost_xmission_cli.run_local</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.least_cost_xmission.trans_cap_costs.html">reVX.least_cost_xmission.trans_cap_costs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.least_cost_xmission.trans_cap_costs.RegionalTransCapCosts.html">reVX.least_cost_xmission.trans_cap_costs.RegionalTransCapCosts</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.least_cost_xmission.trans_cap_costs.ReinforcementLineCosts.html">reVX.least_cost_xmission.trans_cap_costs.ReinforcementLineCosts</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.least_cost_xmission.trans_cap_costs.TieLineCosts.html">reVX.least_cost_xmission.trans_cap_costs.TieLineCosts</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.least_cost_xmission.trans_cap_costs.TransCapCosts.html">reVX.least_cost_xmission.trans_cap_costs.TransCapCosts</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.least_cost_xmission.transmission_layer_creator_cli.html">reVX.least_cost_xmission.transmission_layer_creator_cli</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../_autosummary/reVX.offshore.html">reVX.offshore</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.offshore.assembly_areas.html">reVX.offshore.assembly_areas</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.offshore.assembly_areas.AssemblyAreas.html">reVX.offshore.assembly_areas.AssemblyAreas</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.offshore.assembly_areas_cli.html">reVX.offshore.assembly_areas_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.offshore.assembly_areas_cli.eagle.html">reVX.offshore.assembly_areas_cli.eagle</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.offshore.assembly_areas_cli.get_node_cmd.html">reVX.offshore.assembly_areas_cli.get_node_cmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.offshore.assembly_areas_cli.run_local.html">reVX.offshore.assembly_areas_cli.run_local</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.offshore.dist_to_ports.html">reVX.offshore.dist_to_ports</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.offshore.dist_to_ports.DistanceToPorts.html">reVX.offshore.dist_to_ports.DistanceToPorts</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.offshore.dist_to_ports_cli.html">reVX.offshore.dist_to_ports_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.offshore.dist_to_ports_cli.eagle.html">reVX.offshore.dist_to_ports_cli.eagle</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.offshore.dist_to_ports_cli.get_node_cmd.html">reVX.offshore.dist_to_ports_cli.get_node_cmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.offshore.dist_to_ports_cli.run_local.html">reVX.offshore.dist_to_ports_cli.run_local</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.offshore.dist_to_ports_converter.html">reVX.offshore.dist_to_ports_converter</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.offshore.dist_to_ports_converter.DistToPortsConverter.html">reVX.offshore.dist_to_ports_converter.DistToPortsConverter</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.offshore.offshore_inputs.html">reVX.offshore.offshore_inputs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.offshore.offshore_inputs.OffshoreInputs.html">reVX.offshore.offshore_inputs.OffshoreInputs</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.offshore.offshore_inputs_cli.html">reVX.offshore.offshore_inputs_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.offshore.offshore_inputs_cli.eagle.html">reVX.offshore.offshore_inputs_cli.eagle</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.offshore.offshore_inputs_cli.get_node_cmd.html">reVX.offshore.offshore_inputs_cli.get_node_cmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.offshore.offshore_inputs_cli.run_local.html">reVX.offshore.offshore_inputs_cli.run_local</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../_autosummary/reVX.plexos.html">reVX.plexos</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.plexos.base.html">reVX.plexos.base</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.plexos.base.BaseProfileAggregation.html">reVX.plexos.base.BaseProfileAggregation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.plexos.base.PlexosNode.html">reVX.plexos.base.PlexosNode</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.plexos.dpv_plexos.html">reVX.plexos.dpv_plexos</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.plexos.dpv_plexos.DpvPlexosAggregation.html">reVX.plexos.dpv_plexos.DpvPlexosAggregation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.plexos.dpv_plexos.DpvResource.html">reVX.plexos.dpv_plexos.DpvResource</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.plexos.plexos_plants.html">reVX.plexos.plexos_plants</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.plexos.plexos_plants.PlantProfileAggregation.html">reVX.plexos.plexos_plants.PlantProfileAggregation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.plexos.plexos_plants.Plants.html">reVX.plexos.plexos_plants.Plants</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.plexos.plexos_plants.PlexosPlants.html">reVX.plexos.plexos_plants.PlexosPlants</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.plexos.plexos_plants_cli.html">reVX.plexos.plexos_plants_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.plexos.plexos_plants_cli.get_node_cmd.html">reVX.plexos.plexos_plants_cli.get_node_cmd</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.plexos.rev_reeds_plexos.html">reVX.plexos.rev_reeds_plexos</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.plexos.rev_reeds_plexos.PlexosAggregation.html">reVX.plexos.rev_reeds_plexos.PlexosAggregation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.plexos.rev_reeds_plexos.RevReedsPlexosManager.html">reVX.plexos.rev_reeds_plexos.RevReedsPlexosManager</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.plexos.rev_reeds_plexos_cli.html">reVX.plexos.rev_reeds_plexos_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.plexos.rev_reeds_plexos_cli.get_node_cmd.html">reVX.plexos.rev_reeds_plexos_cli.get_node_cmd</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.plexos.simple_plant_builder.html">reVX.plexos.simple_plant_builder</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.plexos.simple_plant_builder.SimplePlantBuilder.html">reVX.plexos.simple_plant_builder.SimplePlantBuilder</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.plexos.simple_plant_builder_cli.html">reVX.plexos.simple_plant_builder_cli</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.plexos.utilities.html">reVX.plexos.utilities</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.plexos.utilities.get_coord_labels.html">reVX.plexos.utilities.get_coord_labels</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.plexos.utilities.parse_table_name.html">reVX.plexos.utilities.parse_table_name</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.plexos.utilities.DataCleaner.html">reVX.plexos.utilities.DataCleaner</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.plexos.utilities.ProjectGidHandler.html">reVX.plexos.utilities.ProjectGidHandler</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../_autosummary/reVX.pras.html">reVX.pras</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.pras.rev_reeds_pras.html">reVX.pras.rev_reeds_pras</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.pras.rev_reeds_pras.PrasAggregation.html">reVX.pras.rev_reeds_pras.PrasAggregation</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../_autosummary/reVX.red_e.html">reVX.red_e</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.red_e.tech_potential.html">reVX.red_e.tech_potential</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.red_e.tech_potential.TechPotential.html">reVX.red_e.tech_potential.TechPotential</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../_autosummary/reVX.rpm.html">reVX.rpm</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.rpm.rpm_cli.html">reVX.rpm.rpm_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.rpm.rpm_cli.eagle.html">reVX.rpm.rpm_cli.eagle</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.rpm.rpm_cli.get_node_cmd.html">reVX.rpm.rpm_cli.get_node_cmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.rpm.rpm_cli.run_local.html">reVX.rpm.rpm_cli.run_local</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.rpm.rpm_clusters.html">reVX.rpm.rpm_clusters</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.rpm.rpm_clusters.RPMClusters.html">reVX.rpm.rpm_clusters.RPMClusters</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.rpm.rpm_clusters.RPMWavelets.html">reVX.rpm.rpm_clusters.RPMWavelets</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.rpm.rpm_manager.html">reVX.rpm.rpm_manager</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.rpm.rpm_manager.RPMClusterManager.html">reVX.rpm.rpm_manager.RPMClusterManager</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.rpm.rpm_output.html">reVX.rpm.rpm_output</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.rpm.rpm_output.RPMOutput.html">reVX.rpm.rpm_output.RPMOutput</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.rpm.rpm_output.RepresentativeProfiles.html">reVX.rpm.rpm_output.RepresentativeProfiles</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../_autosummary/reVX.setbacks.html">reVX.setbacks</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.setbacks.base.html">reVX.setbacks.base</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.setbacks.base.BUFFERS.html">reVX.setbacks.base.BUFFERS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.setbacks.base.FEATURE_FILTERS.html">reVX.setbacks.base.FEATURE_FILTERS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.setbacks.base.AbstractBaseSetbacks.html">reVX.setbacks.base.AbstractBaseSetbacks</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.setbacks.base.Rasterizer.html">reVX.setbacks.base.Rasterizer</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.setbacks.functions.html">reVX.setbacks.functions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.setbacks.functions.features_clipped_to_county.html">reVX.setbacks.functions.features_clipped_to_county</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.setbacks.functions.features_with_centroid_in_county.html">reVX.setbacks.functions.features_with_centroid_in_county</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.setbacks.functions.parcel_buffer.html">reVX.setbacks.functions.parcel_buffer</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.setbacks.functions.positive_buffer.html">reVX.setbacks.functions.positive_buffer</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.setbacks.regulations.html">reVX.setbacks.regulations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.setbacks.regulations.select_setback_regulations.html">reVX.setbacks.regulations.select_setback_regulations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.setbacks.regulations.validate_setback_regulations_input.html">reVX.setbacks.regulations.validate_setback_regulations_input</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.setbacks.regulations.SetbackRegulations.html">reVX.setbacks.regulations.SetbackRegulations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.setbacks.regulations.WindSetbackRegulations.html">reVX.setbacks.regulations.WindSetbackRegulations</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.setbacks.setbacks.html">reVX.setbacks.setbacks</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.setbacks.setbacks.SETBACK_SPECS.html">reVX.setbacks.setbacks.SETBACK_SPECS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.setbacks.setbacks.setbacks_calculator.html">reVX.setbacks.setbacks.setbacks_calculator</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.setbacks.setbacks_cli.html">reVX.setbacks.setbacks_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.setbacks.setbacks_cli.compute_setbacks.html">reVX.setbacks.setbacks_cli.compute_setbacks</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.setbacks.setbacks_cli.merge_setbacks.html">reVX.setbacks.setbacks_cli.merge_setbacks</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.setbacks.setbacks_cli.preprocess_merge_config.html">reVX.setbacks.setbacks_cli.preprocess_merge_config</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.setbacks.setbacks_cli.preprocess_setbacks_config.html">reVX.setbacks.setbacks_cli.preprocess_setbacks_config</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.setbacks.setbacks_converter.html">reVX.setbacks.setbacks_converter</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.setbacks.setbacks_converter.parse_setbacks.html">reVX.setbacks.setbacks_converter.parse_setbacks</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.setbacks.setbacks_converter.SetbacksConverter.html">reVX.setbacks.setbacks_converter.SetbacksConverter</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../_autosummary/reVX.turbine_flicker.html">reVX.turbine_flicker</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.turbine_flicker.regulations.html">reVX.turbine_flicker.regulations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.turbine_flicker.regulations.FlickerRegulations.html">reVX.turbine_flicker.regulations.FlickerRegulations</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.turbine_flicker.turbine_flicker.html">reVX.turbine_flicker.turbine_flicker</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.turbine_flicker.turbine_flicker.compute_flicker_exclusions.html">reVX.turbine_flicker.turbine_flicker.compute_flicker_exclusions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.turbine_flicker.turbine_flicker.TurbineFlicker.html">reVX.turbine_flicker.turbine_flicker.TurbineFlicker</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.turbine_flicker.turbine_flicker_cli.html">reVX.turbine_flicker.turbine_flicker_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.turbine_flicker.turbine_flicker_cli.eagle.html">reVX.turbine_flicker.turbine_flicker_cli.eagle</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.turbine_flicker.turbine_flicker_cli.flicker_fn_out.html">reVX.turbine_flicker.turbine_flicker_cli.flicker_fn_out</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.turbine_flicker.turbine_flicker_cli.get_node_cmd.html">reVX.turbine_flicker.turbine_flicker_cli.get_node_cmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.turbine_flicker.turbine_flicker_cli.run_local.html">reVX.turbine_flicker.turbine_flicker_cli.run_local</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../_autosummary/reVX.utilities.html">reVX.utilities</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.utilities.cluster_methods.html">reVX.utilities.cluster_methods</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.utilities.cluster_methods.ClusteringMethods.html">reVX.utilities.cluster_methods.ClusteringMethods</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.utilities.exceptions.html">reVX.utilities.exceptions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.utilities.exceptions.GeoTiffKeyError.html">reVX.utilities.exceptions.GeoTiffKeyError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.utilities.exceptions.InvalidMCPStartValueError.html">reVX.utilities.exceptions.InvalidMCPStartValueError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.utilities.exceptions.LeastCostPathNotFoundError.html">reVX.utilities.exceptions.LeastCostPathNotFoundError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.utilities.exceptions.ProfileCheckError.html">reVX.utilities.exceptions.ProfileCheckError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.utilities.exceptions.RPMRuntimeError.html">reVX.utilities.exceptions.RPMRuntimeError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.utilities.exceptions.RPMTypeError.html">reVX.utilities.exceptions.RPMTypeError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.utilities.exceptions.RPMValueError.html">reVX.utilities.exceptions.RPMValueError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.utilities.exceptions.ReedsKeyError.html">reVX.utilities.exceptions.ReedsKeyError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.utilities.exceptions.ReedsRuntimeError.html">reVX.utilities.exceptions.ReedsRuntimeError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.utilities.exceptions.ReedsValueError.html">reVX.utilities.exceptions.ReedsValueError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.utilities.exceptions.SupplyCurvePointCapacityError.html">reVX.utilities.exceptions.SupplyCurvePointCapacityError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.utilities.exceptions.reVXError.html">reVX.utilities.exceptions.reVXError</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.utilities.exclusions.html">reVX.utilities.exclusions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.utilities.exclusions.AbstractBaseExclusionsMerger.html">reVX.utilities.exclusions.AbstractBaseExclusionsMerger</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.utilities.exclusions.AbstractExclusionCalculatorInterface.html">reVX.utilities.exclusions.AbstractExclusionCalculatorInterface</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.utilities.fix_sc_lat_lons.html">reVX.utilities.fix_sc_lat_lons</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.utilities.fix_sc_lat_lons.fix_sc_lat_lon.html">reVX.utilities.fix_sc_lat_lons.fix_sc_lat_lon</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.utilities.forecasts.html">reVX.utilities.forecasts</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.utilities.forecasts.FcstUtils.html">reVX.utilities.forecasts.FcstUtils</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.utilities.output_extractor.html">reVX.utilities.output_extractor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.utilities.rasterize.html">reVX.utilities.rasterize</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.utilities.reeds_cols.html">reVX.utilities.reeds_cols</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.utilities.reeds_cols.add_county_info.html">reVX.utilities.reeds_cols.add_county_info</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.utilities.reeds_cols.add_extra_data.html">reVX.utilities.reeds_cols.add_extra_data</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.utilities.reeds_cols.add_nrel_regions.html">reVX.utilities.reeds_cols.add_nrel_regions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.utilities.reeds_cols.add_reeds_columns.html">reVX.utilities.reeds_cols.add_reeds_columns</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.utilities.region_classifier.html">reVX.utilities.region_classifier</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.utilities.region_classifier.RegionClassifier.html">reVX.utilities.region_classifier.RegionClassifier</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.utilities.regulations.html">reVX.utilities.regulations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.utilities.regulations.AbstractBaseRegulations.html">reVX.utilities.regulations.AbstractBaseRegulations</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.utilities.utilities.html">reVX.utilities.utilities</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.utilities.utilities.centered_pixels.html">reVX.utilities.utilities.centered_pixels</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.utilities.utilities.coordinate_distance.html">reVX.utilities.utilities.coordinate_distance</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.utilities.utilities.load_fips_to_state_map.html">reVX.utilities.utilities.load_fips_to_state_map</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.utilities.utilities.log_versions.html">reVX.utilities.utilities.log_versions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.utilities.utilities.rev_sc_to_geotiff_arr.html">reVX.utilities.utilities.rev_sc_to_geotiff_arr</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.utilities.utilities.to_geo.html">reVX.utilities.utilities.to_geo</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.utilities.utilities.transform_pixels_to_lat_lon.html">reVX.utilities.utilities.transform_pixels_to_lat_lon</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../_autosummary/reVX.version.html">reVX.version</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../_autosummary/reVX.wind_dirs.html">reVX.wind_dirs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.wind_dirs.mean_wind_dirs.html">reVX.wind_dirs.mean_wind_dirs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.wind_dirs.mean_wind_dirs.MeanWindDirections.html">reVX.wind_dirs.mean_wind_dirs.MeanWindDirections</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.wind_dirs.mean_wind_dirs_cli.html">reVX.wind_dirs.mean_wind_dirs_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.wind_dirs.mean_wind_dirs_cli.eagle.html">reVX.wind_dirs.mean_wind_dirs_cli.eagle</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.wind_dirs.mean_wind_dirs_cli.get_node_cmd.html">reVX.wind_dirs.mean_wind_dirs_cli.get_node_cmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.wind_dirs.mean_wind_dirs_cli.run_local.html">reVX.wind_dirs.mean_wind_dirs_cli.run_local</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.wind_dirs.mean_wind_dirs_point.html">reVX.wind_dirs.mean_wind_dirs_point</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.html">reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.wind_dirs.prominent_wind_dirs.html">reVX.wind_dirs.prominent_wind_dirs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.wind_dirs.prominent_wind_dirs.ProminentWindDirections.html">reVX.wind_dirs.prominent_wind_dirs.ProminentWindDirections</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_autosummary/reVX.wind_dirs.prominent_wind_dirs_cli.html">reVX.wind_dirs.prominent_wind_dirs_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.wind_dirs.prominent_wind_dirs_cli.eagle.html">reVX.wind_dirs.prominent_wind_dirs_cli.eagle</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.wind_dirs.prominent_wind_dirs_cli.get_node_cmd.html">reVX.wind_dirs.prominent_wind_dirs_cli.get_node_cmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_autosummary/reVX.wind_dirs.prominent_wind_dirs_cli.run_local.html">reVX.wind_dirs.prominent_wind_dirs_cli.run_local</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../_cli/cli.html">CLI reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../_cli/least-cost-paths.html">least-cost-paths</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/least-cost-paths.html#least-cost-paths-add-rr-to-nn">add-rr-to-nn</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/least-cost-paths.html#least-cost-paths-from-config">from-config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/least-cost-paths.html#least-cost-paths-local">local</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/least-cost-paths.html#least-cost-paths-map-ss-to-rr">map-ss-to-rr</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/least-cost-paths.html#least-cost-paths-ss-from-conn">ss-from-conn</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/least-cost-paths.html#least-cost-paths-valid-config-keys">valid-config-keys</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../_cli/least-cost-xmission.html">least-cost-xmission</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/least-cost-xmission.html#least-cost-xmission-from-config">from-config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/least-cost-xmission.html#least-cost-xmission-local">local</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/least-cost-xmission.html#least-cost-xmission-merge-output">merge-output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/least-cost-xmission.html#least-cost-xmission-merge-reinforcement-costs">merge-reinforcement-costs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/least-cost-xmission.html#least-cost-xmission-valid-config-keys">valid-config-keys</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../_cli/mean-wind-dirs.html">mean-wind-dirs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/mean-wind-dirs.html#mean-wind-dirs-from-config">from-config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/mean-wind-dirs.html#mean-wind-dirs-local">local</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/mean-wind-dirs.html#mean-wind-dirs-valid-config-keys">valid-config-keys</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../_cli/offshore-assembly-areas.html">offshore-assembly-areas</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/offshore-assembly-areas.html#offshore-assembly-areas-from-config">from-config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/offshore-assembly-areas.html#offshore-assembly-areas-local">local</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/offshore-assembly-areas.html#offshore-assembly-areas-valid-config-keys">valid-config-keys</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../_cli/offshore-dist-to-ports.html">offshore-dist-to-ports</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/offshore-dist-to-ports.html#offshore-dist-to-ports-from-config">from-config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/offshore-dist-to-ports.html#offshore-dist-to-ports-local">local</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/offshore-dist-to-ports.html#offshore-dist-to-ports-valid-config-keys">valid-config-keys</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../_cli/offshore-inputs.html">offshore-inputs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/offshore-inputs.html#offshore-inputs-from-config">from-config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/offshore-inputs.html#offshore-inputs-local">local</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/offshore-inputs.html#offshore-inputs-valid-config-keys">valid-config-keys</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../_cli/plexos-plants.html">plexos-plants</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/plexos-plants.html#plexos-plants-eagle">eagle</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../_cli/prominent-wind-dirs.html">prominent-wind-dirs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/prominent-wind-dirs.html#prominent-wind-dirs-from-config">from-config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/prominent-wind-dirs.html#prominent-wind-dirs-local">local</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/prominent-wind-dirs.html#prominent-wind-dirs-valid-config-keys">valid-config-keys</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../_cli/reV-plexos.html">reV-plexos</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/reV-plexos.html#rev-plexos-eagle">eagle</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../_cli/reV-rpm.html">reV-rpm</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/reV-rpm.html#rev-rpm-from-config">from-config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/reV-rpm.html#rev-rpm-local">local</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_cli/reV-rpm.html#rev-rpm-local-cluster">cluster</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_cli/reV-rpm.html#rev-rpm-local-rep-profiles">rep-profiles</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/reV-rpm.html#rev-rpm-valid-config-keys">valid-config-keys</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../_cli/reVX.html">reVX</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/reVX.html#revx-add-reeds-cols">add-reeds-cols</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/reVX.html#revx-correct-forecast">correct-forecast</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/reVX.html#revx-exclusions">exclusions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_cli/reVX.html#revx-exclusions-layers-from-h5">layers-from-h5</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_cli/reVX.html#revx-exclusions-layers-to-h5">layers-to-h5</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_cli/reVX.html#revx-exclusions-mask">mask</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/reVX.html#revx-extract-output-year">extract-output-year</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/reVX.html#revx-fix-rev-sc-lat-lon">fix-rev-sc-lat-lon</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/reVX.html#revx-region-classifier">region-classifier</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/reVX.html#revx-rev-sc-to-gpkg">rev-sc-to-gpkg</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/reVX.html#revx-rev-sc-to-tiff">rev-sc-to-tiff</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../_cli/setbacks.html">setbacks</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/setbacks.html#setbacks-batch">batch</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/setbacks.html#setbacks-compute">compute</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/setbacks.html#setbacks-merge">merge</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/setbacks.html#setbacks-pipeline">pipeline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/setbacks.html#setbacks-reset-status">reset-status</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/setbacks.html#setbacks-script">script</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/setbacks.html#setbacks-status">status</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/setbacks.html#setbacks-template-configs">template-configs</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../_cli/simple-plant-builder.html">simple-plant-builder</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../_cli/transmission-layer-creator.html">transmission-layer-creator</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/transmission-layer-creator.html#transmission-layer-creator-convert-pois">convert-pois</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/transmission-layer-creator.html#transmission-layer-creator-create-h5">create-h5</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/transmission-layer-creator.html#transmission-layer-creator-create-masks">create-masks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/transmission-layer-creator.html#transmission-layer-creator-from-config">from-config</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../_cli/turbine-flicker.html">turbine-flicker</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/turbine-flicker.html#turbine-flicker-from-config">from-config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/turbine-flicker.html#turbine-flicker-local">local</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/turbine-flicker.html#turbine-flicker-valid-config-keys">valid-config-keys</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">reVX</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="examples.html">Examples</a></li>
+      <li class="breadcrumb-item active">reVX LCP</li>
+      <li class="wy-breadcrumbs-aside">
+              <a href="https://github.com/nlr/reVX/blob/main/docs/source/misc/examples.transmission.rst" class="fa fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="revx-lcp">
+<h1>reVX LCP<a class="headerlink" href="#revx-lcp" title="Link to this heading"></a></h1>
+<p>Calculating transmission routing paths requires a series of layers. The <em>costs</em> layer is mandatory. The <em>friction</em> and <em>barriers</em> layers are optional. The <em>costs</em> layer is the most important of the three.</p>
+<ul class="simple">
+<li><p><em>Costs</em> - The cost of building a transmission line including ROW and any factors such as slope, land use, and water depth though a single grid cell (typically 90 meters.) The routing algorithm automatically scales costs for any transmission crossing a cell at a diagonal. Costs for land-based transmission and undersea cables are calculated separately and then combined. Note that landfall costs are incorporated into the final cost raster when wet and dry costs are combined.</p></li>
+<li><p><em>Friction</em> - Friction indicates areas that are undesirable for transmission. Paths that must cross a friction area will take the shortest possible path. Friction does not affect the cost of a line that runs across it; it merely discourages a path from crossing a friction area, possibly taking a longer and more expensive path.</p></li>
+<li><p><em>Barriers</em> - Barriers are effectively a much stronger deterrent for transmission than friction. Routing will preferentially take a more expensive, and higher friction route before crossing a barrier area. Barriers do not affect the cost of lines that are forced to cross them.</p></li>
+</ul>
+<p>Note that the <em>friction</em> and <em>barriers</em> layers must be combined together, using a multiplier for barriers, before an analysis is ran.</p>
+<section id="h5-layer-file-creation">
+<h2>H5 Layer File Creation<a class="headerlink" href="#h5-layer-file-creation" title="Link to this heading"></a></h2>
+<p>The final costs and barriers layers must be saved in an H5 file for the routing code to run. A new H5 file can be created as shown below. Both the template raster and existing H5 file must have the same shape, CRS, and transform.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ transmission-layer-creator --verbose create-h5 --template-raster template_raster.tif --new-h5-file new.h5
+</pre></div>
+</div>
+</section>
+<section id="masks">
+<h2>Masks<a class="headerlink" href="#masks" title="Link to this heading"></a></h2>
+<p>Several of the layer creation operations, particularly combining the dry and wet costs, are dependent on a series of mask GeoTIFFs that indicate which portions of the study area are considered dry versus wet. A polygon GeoPackage or shapefile can be used to create the masks. Features in the file are assumed to represent dry land. The boundaries of features are used to determine the landfall cells. The <code class="docutils literal notranslate"><span class="pre">transmission-layer-creator</span> <span class="pre">create-masks</span></code> command-line tool is used for this as shown in the example below.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ transmission-layer-creator --verbose create-masks \
+    --template-raster template_raster.tif \
+    --land-mask-vector land_mask_vector_file.gpkg \
+    --masks-dir masks
+</pre></div>
+</div>
+</section>
+<section id="layer-creation-configuration-file">
+<h2>Layer Creation Configuration File<a class="headerlink" href="#layer-creation-configuration-file" title="Link to this heading"></a></h2>
+<p>Layers are created by passing a JSON configuration file (config file) to the <a class="reference external" href="https://github.com/NREL/reVX/tree/main/reVX/least_cost_xmission/transmission_layer_creator_cli.py"><code class="docutils literal notranslate"><span class="pre">transmission-layer-creator</span> <span class="pre">from-config</span></code></a> command-line tool. The format of the JSON file is defined using <a class="reference external" href="https://docs.pydantic.dev/latest/">Pydantic</a> in the <code class="docutils literal notranslate"><span class="pre">TransmissionLayerCreationConfig</span></code> class of <a class="reference external" href="https://github.com/NREL/reVX/tree/main/reVX/config/transmission_layer_creation.py"><code class="docutils literal notranslate"><span class="pre">transmission_layer_creation.py</span></code></a>. The config file consists of key-value pairs describing necessary files and layer creation options and can trigger a number of different operations depending on it’s contents. These operations include:</p>
+<ul class="simple">
+<li><p>Creating wet and dry (TODO) cost layers</p></li>
+<li><p>Combining wet and dry costs</p></li>
+<li><p>Creating frictions and/or barrier layers</p></li>
+<li><p>Combining friction and barrier layers together</p></li>
+</ul>
+<section id="required-keys">
+<h3>Required Keys<a class="headerlink" href="#required-keys" title="Link to this heading"></a></h3>
+<p>The following keys are required to run any type of layer creation:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">template_raster_fpath</span></code> - Template GeoTIFF with the shape, CRS, and transform to use for the project. Data in the raster is ignored.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">h5_fpath</span></code> - H5 file to store layers in. It must exist and can be created as described above.</p></li>
+</ul>
+</section>
+<section id="optional-keys">
+<h3>Optional Keys<a class="headerlink" href="#optional-keys" title="Link to this heading"></a></h3>
+<p>These keys are optional and affect how the layer creation runs.</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">masks_dir</span></code> - Directory to find mask GeoTIFFs in. Defaults to the local directory.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">layer_dir</span></code> - By default, all GeoTIFFs listed in <code class="docutils literal notranslate"><span class="pre">barrier_layers</span></code> and <code class="docutils literal notranslate"><span class="pre">friction_layers</span></code> are assumed to be fully defined paths or located in the current working directory. The creator will also search for GeoTIFFs in <code class="docutils literal notranslate"><span class="pre">layer_dir</span></code> if it is set.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">output_tiff_dir</span></code> - Directory to store the created GeoTIFFs for QA/QC. This directory must alrady exist. Defaults to the working directory.</p></li>
+</ul>
+</section>
+<section id="action-keys">
+<h3>Action Keys<a class="headerlink" href="#action-keys" title="Link to this heading"></a></h3>
+<p>The keys below represent layer creation actions. Mostly analyses will need all layers to be created. Individual creation actions can be rerun as needed, e.g. if it is determined that the <code class="docutils literal notranslate"><span class="pre">dry_costs</span></code> need to be adjusted, but the <code class="docutils literal notranslate"><span class="pre">wet_costs</span></code> are acceptable, the <code class="docutils literal notranslate"><span class="pre">wet_costs</span></code> section can be removed from the config file to prevent it from being recalculated and reduce processing time.</p>
+<ul class="simple">
+<li><p>Costs</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">wet_costs</span></code> - Costs for wet areas, typically oceans and great lakes.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dry_costs</span></code> - Costs for dry areas, computed using costs per predefined regions and multipliers that are applied based on slope and land-use categories.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">landfall_cost</span></code> - Single cost value for landfall (offshore analysis only).</p></li>
+</ul>
+</li>
+<li><p>Friction and barriers</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">friction_layers</span></code> - Friction areas that are less desirable for transmission routing.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">barrier_layers</span></code> - Barrier areas that should not have any transmission in the them. Transmission will route through barriers if there is no other possible route.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">merge_friction_and_barriers</span></code> - Combine friction and barriers and save as H5. This action must be performed if the friction or barriers have been modified.</p></li>
+</ul>
+</li>
+</ul>
+</section>
+</section>
+<section id="layer-creation-config-file-examples">
+<h2>Layer Creation Config File Examples<a class="headerlink" href="#layer-creation-config-file-examples" title="Link to this heading"></a></h2>
+<p>The below example JSON file shows all possible keys with example values. The formal config file definition is the <code class="docutils literal notranslate"><span class="pre">TransmissionLayerCreationConfig</span></code> class in the <a class="reference external" href="https://github.com/NREL/reVX/tree/main/reVX/config/transmission_layer_creation.py"><code class="docutils literal notranslate"><span class="pre">transmission_layer_creation.py</span></code></a> file.</p>
+<div class="highlight-JSON5 notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">    </span><span class="nv">&quot;template_raster_fpath&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;bathymetry.tif&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">&quot;h5_fpath&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;./new_xmission_routing_layers.h5&quot;</span><span class="p">,</span>
+
+<span class="w">    </span><span class="nv">&quot;masks_dir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;./masks&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">&quot;layer_dir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/projects/rev/projects/wowts/data/final_friction_tifs/&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">&quot;output_tiff_dir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/projects/rev/projects/wowts/data/output_tifs/&quot;</span><span class="p">,</span>
+
+<span class="w">    </span><span class="nv">&quot;layers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">            </span><span class="nv">&quot;layer_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;wet_costs&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="nv">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="k">null</span><span class="p">,</span>
+<span class="w">            </span><span class="nv">&quot;include_in_h5&quot;</span><span class="p">:</span><span class="w"> </span><span class="k">true</span><span class="p">,</span>
+<span class="w">            </span><span class="nv">&quot;build&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="nv">&quot;bathymetry.tif&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                    </span><span class="nv">&quot;extent&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;wet+&quot;</span><span class="p">,</span>
+<span class="w">                    </span><span class="nv">&quot;bins&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">                        </span><span class="p">{</span><span class="w">              </span><span class="nv">&quot;max&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">-2500</span><span class="p">,</span><span class="w"> </span><span class="nv">&quot;value&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">80526</span><span class="p">},</span>
+<span class="w">                        </span><span class="p">{</span><span class="nv">&quot;min&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">-2500</span><span class="p">,</span><span class="w"> </span><span class="nv">&quot;max&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">-2000</span><span class="p">,</span><span class="w"> </span><span class="nv">&quot;value&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">73205</span><span class="p">},</span>
+<span class="w">                        </span><span class="p">{</span><span class="nv">&quot;min&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">-2000</span><span class="p">,</span><span class="w"> </span><span class="nv">&quot;max&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">-1500</span><span class="p">,</span><span class="w"> </span><span class="nv">&quot;value&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">66550</span><span class="p">},</span>
+<span class="w">                        </span><span class="p">{</span><span class="nv">&quot;min&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">-1500</span><span class="p">,</span><span class="w"> </span><span class="nv">&quot;max&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">-1000</span><span class="p">,</span><span class="w"> </span><span class="nv">&quot;value&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">60500</span><span class="p">},</span>
+<span class="w">                        </span><span class="p">{</span><span class="nv">&quot;min&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">-1000</span><span class="p">,</span><span class="w"> </span><span class="nv">&quot;max&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">-500</span><span class="p">,</span><span class="w">  </span><span class="nv">&quot;value&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">55000</span><span class="p">},</span>
+<span class="w">                        </span><span class="p">{</span><span class="nv">&quot;min&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">-500</span><span class="p">,</span><span class="w">                </span><span class="nv">&quot;value&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">50000</span><span class="p">}</span>
+<span class="w">                    </span><span class="p">]</span>
+<span class="w">                </span><span class="p">},</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">            </span><span class="nv">&quot;layer_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;landfall_costs&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="nv">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="k">null</span><span class="p">,</span>
+<span class="w">            </span><span class="nv">&quot;include_in_h5&quot;</span><span class="p">:</span><span class="w"> </span><span class="k">true</span><span class="p">,</span>
+<span class="w">            </span><span class="nv">&quot;build&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="nv">&quot;bathymetry.tif&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                    </span><span class="nv">&quot;extent&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;wet+&quot;</span><span class="p">,</span>
+<span class="w">                    </span><span class="nv">&quot;global_value&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">450e6</span>
+<span class="w">                </span><span class="p">},</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">            </span><span class="nv">&quot;layer_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;barrier&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="nv">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="k">null</span><span class="p">,</span>
+<span class="w">            </span><span class="nv">&quot;include_in_h5&quot;</span><span class="p">:</span><span class="w"> </span><span class="k">false</span><span class="p">,</span>
+<span class="w">            </span><span class="nv">&quot;build&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="nv">&quot;CAN_MEX_boundary_20240131.gpkg&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                    </span><span class="nv">&quot;extent&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;all&quot;</span><span class="p">,</span>
+<span class="w">                    </span><span class="nv">&quot;rasterize&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                        </span><span class="nv">&quot;value&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">106</span><span class="p">,</span>
+<span class="w">                        </span><span class="nv">&quot;reproject&quot;</span><span class="p">:</span><span class="w"> </span><span class="k">true</span>
+<span class="w">                    </span><span class="p">}</span>
+<span class="w">                </span><span class="p">},</span>
+<span class="w">                </span><span class="nv">&quot;west_coast_slope.tif&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                    </span><span class="nv">&quot;extent&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;wet&quot;</span><span class="p">,</span>
+<span class="w">                    </span><span class="nv">&quot;bins&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="w"> </span><span class="nv">&quot;min&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">15</span><span class="p">,</span><span class="w"> </span><span class="nv">&quot;value&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">101</span><span class="w"> </span><span class="p">}]</span>
+<span class="w">                </span><span class="p">},</span>
+<span class="w">                </span><span class="nv">&quot;/projects/rev/data/conus/rasters/swca_cultural_resources_risk.tif&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                    </span><span class="nv">&quot;extent&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;all&quot;</span><span class="p">,</span>
+<span class="w">                    </span><span class="nv">&quot;map&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">&quot;4&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">102</span><span class="w"> </span><span class="p">}</span>
+<span class="w">                </span><span class="p">}</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">            </span><span class="nv">&quot;layer_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;friction&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="nv">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="k">null</span><span class="p">,</span>
+<span class="w">            </span><span class="nv">&quot;include_in_h5&quot;</span><span class="p">:</span><span class="w"> </span><span class="k">false</span><span class="p">,</span>
+<span class="w">            </span><span class="nv">&quot;build&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="nv">&quot;west_coast_slope.tif&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                    </span><span class="nv">&quot;extent&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;wet&quot;</span><span class="p">,</span>
+<span class="w">                    </span><span class="nv">&quot;bins&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="w"> </span><span class="nv">&quot;min&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">10</span><span class="p">,</span><span class="w"> </span><span class="nv">&quot;max&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">15</span><span class="p">,</span><span class="w"> </span><span class="nv">&quot;value&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">5</span><span class="w"> </span><span class="p">}]</span>
+<span class="w">                </span><span class="p">},</span>
+<span class="w">                </span><span class="nv">&quot;mpa.tif&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">&quot;map&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nv">&quot;2&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">5</span><span class="p">,</span><span class="w"> </span><span class="nv">&quot;3&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">7</span><span class="p">},</span><span class="w"> </span><span class="nv">&quot;extent&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;all&quot;</span><span class="w"> </span><span class="p">},</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">    </span><span class="p">],</span>
+
+<span class="w">    </span><span class="nv">&quot;merge_friction_and_barriers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nv">&quot;friction_layer&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;friction&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nv">&quot;barrier_layer&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;barrier&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nv">&quot;barrier_multiplier&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">1e6</span>
+<span class="w">    </span><span class="p">},</span>
+
+<span class="w">    </span><span class="nv">&quot;dry_costs&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nv">&quot;iso_region_tiff&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/path/to/nlcd/ISO/regions/iso_regions.tif&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nv">&quot;nlcd_tiff&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/path/to/nlcd/raster.tiff&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nv">&quot;slope_tiff&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/path/to/slope/raster.tiff&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nv">&quot;cost_configs&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/optional/path/to/xmission/cost/config.json&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nv">&quot;extra_tiffs&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">            </span><span class="s">&quot;/optional/path/to/extra/layer1.tif&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="s">&quot;/optional/path/to/extra/layer2.tif&quot;</span>
+<span class="w">        </span><span class="p">]</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="running-the-layer-creator">
+<h2>Running the Layer Creator<a class="headerlink" href="#running-the-layer-creator" title="Link to this heading"></a></h2>
+<p>Prior to running the layer creating command, we must initialize an HDF5 file that will hold the cost layers.
+We can do this using the create</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ transmission-layer-creator --verbose create-h5 -t template.tif -h new_xmission_routing_layers.h5
+</pre></div>
+</div>
+<p>(Next step is <em>optional</em> for dry-only runs)
+We also need to create the land mask, which we can do by running</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ transmission-layer-creator --verbose create-masks -l land_mask_vector.gpkg -t template.tif -m ./masks
+</pre></div>
+</div>
+<p>Once an H5 file has been initialized, the land masks have been created, and a config file has been put together,
+the layer creation tool can be run from the command-line, e.g.:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ transmission-layer-creator --verbose from-config --config layer_config_file.json
+</pre></div>
+</div>
+<p>With an appropriate config file, this will result in all layers required for a transmission routing analysis being created and saved in the specified H5 file.</p>
+</section>
+<section id="conus-onshore-example">
+<h2>CONUS (Onshore) Example<a class="headerlink" href="#conus-onshore-example" title="Link to this heading"></a></h2>
+<p>All examples assume that reVX was installed using <code class="docutils literal notranslate"><span class="pre">pip</span></code> so that the CLI commands are available.</p>
+<section id="costs">
+<h3>Costs<a class="headerlink" href="#costs" title="Link to this heading"></a></h3>
+<p>The below file can be used as a template to compute the costs to be used in a Least Cost Path analysis described in more detail below.</p>
+<div class="highlight-JSON5 notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">    </span><span class="nv">&quot;h5_fpath&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;./new_transmission_cost_file_name.h5&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">&quot;template_raster_fpath&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/path/to/template/raster.tif&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">&quot;output_tiff_dir&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;./output_transmission_tiffs&quot;</span><span class="p">,</span>
+
+<span class="w">    </span><span class="nv">&quot;dry_costs&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nv">&quot;iso_region_tiff&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/path/to/iso_regions.tif&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nv">&quot;nlcd_tiff&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/path/to/nlcd.tif&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nv">&quot;slope_tiff&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/path/to/slope.tif&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nv">&quot;extra_tiffs&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">            </span><span class="s">&quot;/path/to/transmission_barrier.tif&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="s">&quot;/path/to/tie_line_multipliers.tif&quot;</span><span class="p">,</span>
+<span class="w">            </span><span class="s">&quot;/path/to/another_extra_layer.tif&quot;</span>
+<span class="w">        </span><span class="p">]</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+</pre></div>
+</div>
+<p>See <a class="reference external" href="https://github.com/NREL/reVX/tree/main/reVX/least_cost_xmission/transmission_layer_creator_cli.py"><code class="docutils literal notranslate"><span class="pre">transmission_layer_creator_cli.from_config</span></code></a> for more info about these inputs. Your cost H5 file output should look something like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">another_extra_layer</span>      <span class="n">Dataset</span> <span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="mi">33792</span><span class="p">,</span> <span class="mi">48640</span><span class="p">}</span>
+<span class="n">iso_regions</span>              <span class="n">Dataset</span> <span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="mi">33792</span><span class="p">,</span> <span class="mi">48640</span><span class="p">}</span>
+<span class="n">latitude</span>                 <span class="n">Dataset</span> <span class="p">{</span><span class="mi">33792</span><span class="p">,</span> <span class="mi">48640</span><span class="p">}</span>
+<span class="n">longitude</span>                <span class="n">Dataset</span> <span class="p">{</span><span class="mi">33792</span><span class="p">,</span> <span class="mi">48640</span><span class="p">}</span>
+<span class="n">slope</span>                    <span class="n">Dataset</span> <span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="mi">33792</span><span class="p">,</span> <span class="mi">48640</span><span class="p">}</span>
+<span class="n">tie_line_costs_102MW</span>     <span class="n">Dataset</span> <span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="mi">33792</span><span class="p">,</span> <span class="mi">48640</span><span class="p">}</span>
+<span class="n">tie_line_costs_1500MW</span>    <span class="n">Dataset</span> <span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="mi">33792</span><span class="p">,</span> <span class="mi">48640</span><span class="p">}</span>
+<span class="n">tie_line_costs_205MW</span>     <span class="n">Dataset</span> <span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="mi">33792</span><span class="p">,</span> <span class="mi">48640</span><span class="p">}</span>
+<span class="n">tie_line_costs_3000MW</span>    <span class="n">Dataset</span> <span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="mi">33792</span><span class="p">,</span> <span class="mi">48640</span><span class="p">}</span>
+<span class="n">tie_line_costs_400MW</span>     <span class="n">Dataset</span> <span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="mi">33792</span><span class="p">,</span> <span class="mi">48640</span><span class="p">}</span>
+<span class="n">tie_line_multipliers</span>     <span class="n">Dataset</span> <span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="mi">33792</span><span class="p">,</span> <span class="mi">48640</span><span class="p">}</span>
+<span class="n">transmission_barrier</span>     <span class="n">Dataset</span> <span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="mi">33792</span><span class="p">,</span> <span class="mi">48640</span><span class="p">}</span>
+<span class="n">nlcd</span>                     <span class="n">Dataset</span> <span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="mi">33792</span><span class="p">,</span> <span class="mi">48640</span><span class="p">}</span>
+</pre></div>
+</div>
+<section id="find-conus-least-cost-paths-on-a-local-eagle-node">
+<h4>Find CONUS least cost paths on a local eagle node<a class="headerlink" href="#find-conus-least-cost-paths-on-a-local-eagle-node" title="Link to this heading"></a></h4>
+<p>Find least cost paths, costs, and connection costs on eagle login node for 1000MW capacity and all SC points, saving results in current directory. These examples will overload the login nodes and should be run on a debug node.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ least-cost-xmission local \
+    --cost_fpath /shared-projects/rev/exclusions/xmission_costs.h5 \
+    --features_fpath /projects/rev/data/transmission/shapefiles/conus_allconns.gpkg \
+    --capacity_class 1000
+    --cl tie_line_costs_1500MW
+</pre></div>
+</div>
+</section>
+<section id="run-onshore-analysis-from-a-config-file">
+<h4>Run onshore analysis from a config file<a class="headerlink" href="#run-onshore-analysis-from-a-config-file" title="Link to this heading"></a></h4>
+<p>The below file can be used to start a full CONUS analysis for the 1000MW power class. The setting <code class="docutils literal notranslate"><span class="pre">nodes</span></code> in <code class="docutils literal notranslate"><span class="pre">execution_control</span></code> will split the processing across five eagle nodes.</p>
+<div class="highlight-JSON5 notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nv">&quot;execution_control&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">&quot;allocation&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;YOUR_SLURM_ALLOCATION&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">&quot;feature&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;--qos=high&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">&quot;memory&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">178</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">&quot;nodes&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">5</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">&quot;option&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;eagle&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">&quot;walltime&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">4</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nv">&quot;cost_fpath&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/shared-projects/rev/exclusions/xmission_costs.h5&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nv">&quot;features_fpath&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/projects/rev/data/transmission/shapefiles/conus_allconns.gpkg&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nv">&quot;capacity_class&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1000&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nv">&quot;cost_layers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s">&quot;tie_line_costs_{}MW&quot;</span><span class="p">],</span>
+<span class="w">  </span><span class="nv">&quot;iso_regions_layer_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;iso_regions&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nv">&quot;barrier_mult&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;100&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nv">&quot;log_directory&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/scratch/USER_NAME/log&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nv">&quot;log_level&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;INFO&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Note that the <code class="docutils literal notranslate"><span class="pre">iso_regions_layer_name</span></code> input is needed because our nayer name
+is not the expected default value of <code class="docutils literal notranslate"><span class="pre">&quot;ISO_regions&quot;</span></code> (our layer name is
+lowercase).</p>
+<p>Assuming the above config file is saved as <code class="docutils literal notranslate"><span class="pre">config_conus.json</span></code> in the current directory, it can be kicked off with:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ least-cost-xmission from-config --config ./config_conus.json
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+<section id="reinforced-transmission">
+<h2>Reinforced Transmission<a class="headerlink" href="#reinforced-transmission" title="Link to this heading"></a></h2>
+<p>In this methodology, total interconnection costs are comprised of two components: <em>point-of-interconnection costs</em> and <em>network upgrade costs</em>. Point-of-interconnection costs include the cost of the spur line between the RE facility (SC point) and the connected substation, as well as the cost to upgrade the substation itself. Network upgrade costs are represented by costs to increase the transmission capacity between the connected substation and the main network node in a given reinforcement region. Network upgrade costs are assumed to be 50% of the cost of a new greenfield transmission of the same voltage as the existing transmission lines along the same path. The 50% heuristic represents cost for reconductoring or increasing the number of circuits along those lines. <code class="docutils literal notranslate"><span class="pre">reVX</span></code> (and any derivative products, e.g. <code class="docutils literal notranslate"><span class="pre">reV</span></code>) do not include estimates for longer-distance transmission that may be needed to export the renewable energy between one reinforcement region and another.</p>
+<section id="key-assumptions-under-this-approach">
+<h3>Key assumptions under this approach:<a class="headerlink" href="#key-assumptions-under-this-approach" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Area of interest (e.g. CONUS) is broken up into “Reinforcement Regions” (i.e. Balancing Areas, States, Counties, etc.)</p></li>
+<li><p>Each reinforcement region has one or more “Network Node” (typically a city or highly populated area)</p></li>
+<li><p>Substations or transmission lines (i.e. new substations) that a SC point connects to <strong>must be in the same reinforcement regions as the SC point</strong></p></li>
+<li><p>Reinforcement costs are calculated based on the distance between the substation (existing or new) a SC point connected to and the Network Node in that reinforcement region</p>
+<ul>
+<li><p>The path used to calculate reinforcement costs is traced along existing transmission lines <strong>for as long as possible</strong>.</p></li>
+<li><p>The reinforcement cost is taken to be half (50%) of the total greenfield cost of the transmission line being traced. If a reinforcement path traces along multiple transmission lines, the corresponding greenfield costs are used for each segment. If multiple transmission lines are available in a single raster pixel, the cost for the highest-voltage line is used. Wherever there is no transmission line, a default greenfield cost assumption (specified by the user; typically 230 kV) is used.</p></li>
+</ul>
+</li>
+</ul>
+</section>
+</section>
+<p>Reinforcement costs can be computes in several ways. The older but simpler approach is to allow supply curve points to only connect to existing substations.
+The newer but more complex approach allows supply curve points to connect to existing substations or transmission lines, simulating the build of a new
+substation at the connection point for the latter case.</p>
+<section id="substation-connections-only-old">
+<h2>Substation connections only (OLD)<a class="headerlink" href="#substation-connections-only-old" title="Link to this heading"></a></h2>
+<p>First, map the substations in your data set to the reinforcement regions using the following reVX command:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ least-cost-paths map-ss-to-rr --features_fpath ./conus_allconns.gpkg --regions_fpath ./regions.gpkg --region_identifier_column rr_id --out_file ./substations_with_ba.gpkg
+</pre></div>
+</div>
+<p>Next, compute the reinforcement paths on multiple nodes. Use the file below as a template (<code class="docutils literal notranslate"><span class="pre">reinforcement_path_costs_config.json</span></code>):</p>
+<div class="highlight-JSON5 notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">    </span><span class="nv">&quot;execution_control&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nv">&quot;allocation&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;YOUR_SLURM_ALLOCATION&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nv">&quot;memory&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">178</span><span class="p">,</span>
+<span class="w">      </span><span class="nv">&quot;option&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;eagle&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nv">&quot;max_workers&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">1</span><span class="p">,</span>
+<span class="w">      </span><span class="nv">&quot;nodes&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">10</span><span class="p">,</span>
+<span class="w">      </span><span class="nv">&quot;walltime&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">1</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="nv">&quot;cost_fpath&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/path/to/cost.h5&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">&quot;features_fpath&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;./substations_with_ba.gpkg&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">&quot;network_nodes_fpath&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;./nn.gpkg&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">&quot;transmission_lines_fpath&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/path/to/substations_and_tlines.gpkg&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">&quot;region_identifier_column&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;rr_id&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">&quot;capacity_class&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;400&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">&quot;cost_layers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s">&quot;tie_line_costs_{}MW&quot;</span><span class="p">],</span>
+<span class="w">    </span><span class="nv">&quot;barrier_mult&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;100&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">&quot;log_directory&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;./logs&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">&quot;log_level&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;INFO&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Note that we are specifying <code class="docutils literal notranslate"><span class="pre">&quot;capacity_class&quot;:</span> <span class="pre">&quot;400&quot;</span></code> (which then fills in the <code class="docutils literal notranslate"><span class="pre">{}</span></code> in <code class="docutils literal notranslate"><span class="pre">&quot;tie_line_costs_{}MW&quot;</span></code>) to use the 230 kV (400MW capacity) greenfield costs for portions of the reinforcement paths that do no have existing transmission. If you would like to save the reinforcement path geometries, simply add <code class="docutils literal notranslate"><span class="pre">&quot;save_paths&quot;:</span> <span class="pre">true</span></code> to the file, but note that this may increase your data product size significantly. Your features and network nodes data should contain the
+“region_identifier_column” and the values in that column should match the region containing the substations and network nodes. In order to avoid unnecessary computation, ensure that your features input contains
+only the substations for which you computed reinforcement costs in the previous step.</p>
+<p>After putting together your config file, simply call</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ least-cost-paths from-config -c reinforcement_path_costs_config.json
+</pre></div>
+</div>
+<p>This will generate 10 chunked files (since we used 10 nodes in the config above). To merge the data, simply call</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ least-cost-xmission merge-output -of reinforcement_costs_400MW_230kV.gpkg -od ./ reinforcement_costs_*_lcp.csv
+</pre></div>
+</div>
+<p>You should now have a file containing all of the reinforcement costs for the substations in your dataset. Next, compute the spur line transmission costs for these substations using the following template config (<code class="docutils literal notranslate"><span class="pre">least_cost_transmission_1000MW.json</span></code>):</p>
+<div class="highlight-JSON5 notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">    </span><span class="nv">&quot;execution_control&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nv">&quot;allocation&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;YOUR_SLURM_ALLOCATION&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nv">&quot;memory&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">500</span><span class="p">,</span>
+<span class="w">      </span><span class="nv">&quot;nodes&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">100</span><span class="p">,</span>
+<span class="w">      </span><span class="nv">&quot;option&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;eagle&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nv">&quot;max_workers&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">36</span><span class="p">,</span>
+<span class="w">      </span><span class="nv">&quot;walltime&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">1</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="nv">&quot;cost_fpath&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/path/to/cost.h5&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">&quot;features_fpath&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;./substations_with_ba.gpkg&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">&quot;regions_fpath&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;./regions.gpkg&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">&quot;region_identifier_column&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;rr_id&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">&quot;capacity_class&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1000&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">&quot;cost_layers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s">&quot;tie_line_costs_{}MW&quot;</span><span class="p">],</span>
+<span class="w">    </span><span class="nv">&quot;iso_regions_layer_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;iso_regions&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">&quot;barrier_mult&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;100&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">&quot;log_directory&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;./logs&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">&quot;log_level&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;INFO&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">&quot;min_line_length&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;least_cost_transmission&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Kickoff the execution using the following command:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ least-cost-xmission from-config -c least_cost_transmission_1000MW.json
+</pre></div>
+</div>
+<p>You may need to run this command multiple times - once for each transmission line capacity.
+As before the data will come split into multiple files (in this case 100, since we used 100 nodes). To merge the data, run a command similar to the one above:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ least-cost-xmission merge-output -of transmission_1000MW_128.csv -od ./ least_cost_transmission_*_1000_128.csv
+</pre></div>
+</div>
+<p>Finally, combine the spur line transmission costs and the reinforcement costs into a single transmission table:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ least-cost-xmission merge-reinforcement-costs -of transmission_reinforced_1000MW_128.csv -f ./transmission_1000MW_128.csv -r ./reinforcement_costs_400MW_230kV.csv
+</pre></div>
+</div>
+<p>Again, you may need to run this command multiple times - once for each transmission line capacity.</p>
+<p>The resulting tables can be passed directly to <code class="docutils literal notranslate"><span class="pre">reV</span></code>, which will automatically detect reinforcement costs and take them into account during the supply curve computation.</p>
+</section>
+<section id="substation-and-tie-line-connections-new">
+<h2>Substation and tie-line connections (New)<a class="headerlink" href="#substation-and-tie-line-connections-new" title="Link to this heading"></a></h2>
+<p>Since we want to allow tie-line connecitons, we must first run LCP to determine where new substation will be built:</p>
+<div class="highlight-JSON5 notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">    </span><span class="nv">&quot;execution_control&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nv">&quot;allocation&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;YOUR_SLURM_ALLOCATION&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nv">&quot;memory&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">500</span><span class="p">,</span>
+<span class="w">      </span><span class="nv">&quot;nodes&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">100</span><span class="p">,</span>
+<span class="w">      </span><span class="nv">&quot;option&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;eagle&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nv">&quot;max_workers&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">36</span><span class="p">,</span>
+<span class="w">      </span><span class="nv">&quot;walltime&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">1</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="nv">&quot;cost_fpath&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/path/to/cost.h5&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">&quot;features_fpath&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/path/to/substations_and_tlines.gpkg&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">&quot;regions_fpath&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/path/to/regions.gpkg&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">&quot;region_identifier_column&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;rr_id&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">&quot;capacity_class&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;200&quot;</span><span class="p">,</span><span class="w">  </span><span class="c1">// 138 kV</span>
+<span class="w">    </span><span class="nv">&quot;barrier_mult&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;5000&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">&quot;cost_layers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s">&quot;tie_line_costs_{}MW&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;swca_cultural_resources_risk&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;swca_natural_resources_risk&quot;</span><span class="p">],</span>
+<span class="w">    </span><span class="nv">&quot;iso_regions_layer_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;iso_regions&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">&quot;log_directory&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;./logs&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">&quot;log_level&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;INFO&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">&quot;resolution&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">128</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">&quot;radius&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">278</span><span class="p">,</span><span class="w">  </span><span class="c1">// 25 km in pixels: 25,000m / 90m = 277.777777777777778</span>
+<span class="w">    </span><span class="nv">&quot;clipping_buffer&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">1.1</span><span class="p">,</span><span class="w">  </span><span class="c1">// default is 1.05 but since we go down to 25km radius, we can make this slightly bigger</span>
+<span class="w">    </span><span class="nv">&quot;expand_radius&quot;</span><span class="p">:</span><span class="w"> </span><span class="k">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">&quot;min_line_length&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The data will come split into multiple files (in this case 100, since we used 100 nodes). To merge the data, run:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ least-cost-xmission merge-output -of transmission_200MW_128.gpkg -od ./ least_cost_transmission_*_200_128.gpkg
+</pre></div>
+</div>
+<p>Once you have the connecitons table, extract the substation locations using the following reVX command:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ least-cost-paths ss-from-conn -con ./transmission_200MW_128.gpkg -rid rr_id -of ./ss_from_conns_200_128.gpkg
+</pre></div>
+</div>
+<p>If your netwrok nodes file is missing the region identified column, you can add it now:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ least-cost-paths add-rr-to-nn -nodes ./nn.gpkg -regs ./regions.gpkg -rid rr_id
+</pre></div>
+</div>
+<p>Now you can cpmpute the reinforcement paths the same way as the method above:</p>
+<div class="highlight-JSON5 notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">    </span><span class="nv">&quot;execution_control&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nv">&quot;allocation&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;YOUR_SLURM_ALLOCATION&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nv">&quot;memory&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">178</span><span class="p">,</span>
+<span class="w">      </span><span class="nv">&quot;option&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;eagle&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nv">&quot;max_workers&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">1</span><span class="p">,</span>
+<span class="w">      </span><span class="nv">&quot;nodes&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">10</span><span class="p">,</span>
+<span class="w">      </span><span class="nv">&quot;walltime&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">1</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="nv">&quot;cost_fpath&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/path/to/cost.h5&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">&quot;features_fpath&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;./ss_from_conns_200_128.gpkg&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">&quot;network_nodes_fpath&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;./nn.gpkg&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">&quot;transmission_lines_fpath&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/path/to/substations_and_tlines.gpkg&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">&quot;region_identifier_column&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;rr_id&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">&quot;capacity_class&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;200&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">&quot;cost_layers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s">&quot;tie_line_costs_{}MW&quot;</span><span class="p">],</span>
+<span class="w">    </span><span class="nv">&quot;barrier_mult&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;5000&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">&quot;log_directory&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;./logs&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">&quot;log_level&quot;</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;INFO&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">&quot;save_paths&quot;</span><span class="p">:</span><span class="w"> </span><span class="k">true</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Note that we are specifying <code class="docutils literal notranslate"><span class="pre">&quot;capacity_class&quot;:</span> <span class="pre">&quot;200&quot;</span></code> (which then fills in the <code class="docutils literal notranslate"><span class="pre">{}</span></code> in <code class="docutils literal notranslate"><span class="pre">&quot;tie_line_costs_{}MW&quot;</span></code>) to use the 138 kV (205 MW capacity) greenfield costs for portions of the reinforcement paths that do no have existing transmission. If you would like to save the reinforcement path geometries, simply add <code class="docutils literal notranslate"><span class="pre">&quot;save_paths&quot;:</span> <span class="pre">true</span></code> to the file, but note that this may increase your data product size significantly. Your features and network nodes data should contain the
+“region_identifier_column” and the values in that column should match the region containing the substations and network nodes.</p>
+<p>After putting together your config file, simply call</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ least-cost-paths from-config -c reinforcement_path_costs_config.json
+</pre></div>
+</div>
+<p>This will generate 10 chunked files (since we used 10 nodes in the config above). To merge the data, simply call</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ least-cost-xmission merge-output -of reinforcement_costs_200MW_138kkV.gpkg -od ./ reinforcement_costs_*_lcp.gpkg
+</pre></div>
+</div>
+<p>You should now have a file containing all of the reinforcement costs for the substations in your dataset.
+Finally, combine the spur line transmission costs and the reinforcement costs into a single transmission table:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ least-cost-xmission merge-reinforcement-costs -of transmission_reinforced_200MW_128.csv  -f ./transmission_200MW_128.csv -r ./reinforcement_costs_200MW_138kV.csv
+</pre></div>
+</div>
+<p>The resulting tables can be passed directly to <code class="docutils literal notranslate"><span class="pre">reV</span></code>, which will automatically detect reinforcement costs and take them into account during the supply curve computation.</p>
+</section>
+<section id="offshore-least-cost-paths">
+<h2>Offshore Least Cost Paths<a class="headerlink" href="#offshore-least-cost-paths" title="Link to this heading"></a></h2>
+<section id="nomenclature-note">
+<h3>Nomenclature Note<a class="headerlink" href="#nomenclature-note" title="Link to this heading"></a></h3>
+<p>The offshore least cost paths analysis was initially performed for the Atlantic OffShore Wind Transmission (AOSWT). Some references to the AOSWT acronym still remain.</p>
+</section>
+<section id="offshore-workflow">
+<h3>Offshore Workflow<a class="headerlink" href="#offshore-workflow" title="Link to this heading"></a></h3>
+<p>General steps to run an offshore analysis:</p>
+<ol class="arabic simple">
+<li><p>Create cost, friction, and barrier layers as described above.</p></li>
+<li><p>Convert points-of-interconnection (POI) (grid connections on land) to transmission feature lines. See example below.</p></li>
+<li><p>Determine desired sc_point_gids to process.</p></li>
+<li><p>Select appropriate clipping radius. Unlike a CONUS analysis, which clips the cost raster by proximity to infinite sinks, offshore analyses have typically used a fixed search radius. 5000 km is a good starting point. Note that memory usage increases with the square of radius.</p></li>
+<li><p>Run analysis. See examples below.</p></li>
+<li><p>Convert the output to GeoJSON (optional). See post processing below.</p></li>
+</ol>
+</section>
+<section id="offshore-examples">
+<h3>Offshore Examples<a class="headerlink" href="#offshore-examples" title="Link to this heading"></a></h3>
+<p>All examples assume that reVX was installed using <code class="docutils literal notranslate"><span class="pre">pip</span></code> so that the CLI commands are available.</p>
+<section id="creating-poi-transmission-features-from-points">
+<h4>Creating POI transmission features from points<a class="headerlink" href="#creating-poi-transmission-features-from-points" title="Link to this heading"></a></h4>
+<p>The onshore point of interconnections (POIs) have typically been provided in a CSV file. These must be converted to very short lines in a GeoPackage to work with the LCP code. The input CSV must have the following fields: ‘POI Name’, ‘State’, ‘Voltage (kV)’, ‘Lat’, ‘Long’. Note that the POIs must also be connected to a transmission line.  The <code class="docutils literal notranslate"><span class="pre">transmission-layer-creator</span> <span class="pre">convert-pois</span></code> command-line function will perform all necessary operations to convert the CSV file to a properly configured GeoPackage.  Paths from POIs to the fake transmission line can be removed in post processing using the <code class="docutils literal notranslate"><span class="pre">--drop</span> <span class="pre">TransLine</span></code> option with the <code class="docutils literal notranslate"><span class="pre">least-cost-xmission</span> <span class="pre">merge-output</span></code> command.</p>
+</section>
+<section id="find-offshore-least-cost-paths-on-a-local-eagle-node">
+<h4>Find offshore least cost paths on a local eagle node<a class="headerlink" href="#find-offshore-least-cost-paths-on-a-local-eagle-node" title="Link to this heading"></a></h4>
+<p>Find least cost paths, costs, and connection costs on eagle login node for 100MW capacity, saving results in current directory. These examples will overload the login nodes and should be run on a debug node.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ least-cost-xmission local \
+    --cost_fpath /shared-projects/rev/transmission_tables/least_cost/offshore/aoswt_costs.h5 \
+    --features_fpath /shared-projects/rev/transmission_tables/least_cost/offshore/aoswt_pois.gpkg \
+    --capacity_class 100
+</pre></div>
+</div>
+<p>Run the above analysis for only two SC points, using only one core.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ least-cost-xmission local -v \
+    --cost_fpath /shared-projects/rev/transmission_tables/least_cost/offshore/aoswt_costs.h5 \
+    --features_fpath /shared-projects/rev/transmission_tables/least_cost/offshore/aoswt_pois.gpkg \
+    --capacity_class 100 \
+    --max_workers 1 \
+    --sc_point_gids [36092,36093]
+</pre></div>
+</div>
+</section>
+<section id="run-aoswt-from-a-config-file">
+<h4>Run AOSWT from a config file<a class="headerlink" href="#run-aoswt-from-a-config-file" title="Link to this heading"></a></h4>
+<p>Using a config file is the preferred method of running an analysis. The below file processes a single SC point (sc_point_gid = 40139) on a debug node. Note that SLURM high quality of service on a standard node can be requested with <code class="docutils literal notranslate"><span class="pre">&quot;feature&quot;:</span> <span class="pre">&quot;--qos=high&quot;</span></code>. This file also uses the optional <code class="docutils literal notranslate"><span class="pre">save_paths</span></code> and <code class="docutils literal notranslate"><span class="pre">radius</span></code> options to save the least coasts paths to a GeoPackage and force a cost raster clipping radius of 5000 pixels, versus determining the radius from the nearest sinks. Memory usage increases with the square of radius. Since this is an offshore analysis, the resolution SC point resolution is set to 118. The <code class="docutils literal notranslate"><span class="pre">simplify_geo</span></code> key is set to <code class="docutils literal notranslate"><span class="pre">100</span></code>. Be default, the saved paths will have vertices for each raster cell, resulting in very large output files. Using <code class="docutils literal notranslate"><span class="pre">simplify_geo</span></code> simplifies the geometry, greatly reduces output file sizes, and improves run times. Large number will result in less vertices and smaller files sizes.</p>
+<p>The value for <code class="docutils literal notranslate"><span class="pre">allocation</span></code> should be set to the desired SLURM allocation. The <code class="docutils literal notranslate"><span class="pre">max_workers</span></code> key can be used to reduce the workers on each node if memory issues are encountered, but can typically be left out.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;execution_control&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;allocation&quot;</span><span class="p">:</span> <span class="s2">&quot;YOUR_SLURM_ALLOCATION&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;feature&quot;</span><span class="p">:</span> <span class="s2">&quot;-p debug&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;memory&quot;</span><span class="p">:</span> <span class="mi">178</span><span class="p">,</span>
+    <span class="s2">&quot;nodes&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+    <span class="s2">&quot;option&quot;</span><span class="p">:</span> <span class="s2">&quot;eagle&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;walltime&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="s2">&quot;max_workers&quot;</span><span class="p">:</span> <span class="mi">36</span>
+  <span class="p">},</span>
+  <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;test&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;cost_fpath&quot;</span><span class="p">:</span> <span class="s2">&quot;/shared-projects/rev/transmission_tables/least_cost/offshore/aoswt_costs.h5&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;features_fpath&quot;</span><span class="p">:</span> <span class="s2">&quot;/shared-projects/rev/transmission_tables/least_cost/offshore/aoswt_pois.gpkg&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;capacity_class&quot;</span><span class="p">:</span> <span class="s2">&quot;100&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;barrier_mult&quot;</span><span class="p">:</span> <span class="s2">&quot;100&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;log_directory&quot;</span><span class="p">:</span> <span class="s2">&quot;/scratch/USER_NAME/log&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;log_level&quot;</span><span class="p">:</span> <span class="s2">&quot;DEBUG&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;sc_point_gids&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">40139</span><span class="p">],</span>
+  <span class="s2">&quot;resolution&quot;</span><span class="p">:</span> <span class="mi">118</span><span class="p">,</span>
+  <span class="s2">&quot;save_paths&quot;</span><span class="p">:</span> <span class="n">true</span><span class="p">,</span>
+  <span class="s2">&quot;radius&quot;</span><span class="p">:</span> <span class="mi">5000</span><span class="p">,</span>
+  <span class="s2">&quot;simplify_geo&quot;</span><span class="p">:</span> <span class="mi">100</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Assuming the above config file is saved as <code class="docutils literal notranslate"><span class="pre">config_aoswt.json</span></code> in the current directory, it can be kicked off with:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ least-cost-xmission from-config --config ./config_aoswt.json
+</pre></div>
+</div>
+<p>A sample config for WOWTS would look very similar:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;execution_control&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;allocation&quot;</span><span class="p">:</span> <span class="s2">&quot;YOUR_SLURM_ALLOCATION&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;memory&quot;</span><span class="p">:</span> <span class="mi">249</span><span class="p">,</span>
+    <span class="s2">&quot;nodes&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
+    <span class="s2">&quot;option&quot;</span><span class="p">:</span> <span class="s2">&quot;kestrel&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;walltime&quot;</span><span class="p">:</span> <span class="mi">4</span>
+  <span class="p">},</span>
+  <span class="s2">&quot;log_directory&quot;</span><span class="p">:</span> <span class="s2">&quot;/scratch/USER_NAME/log&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;log_level&quot;</span><span class="p">:</span> <span class="s2">&quot;INFO&quot;</span>
+  <span class="s2">&quot;cost_fpath&quot;</span><span class="p">:</span> <span class="s2">&quot;/projects/rev/data/transmission/north_america/conus/least_cost/offshore/processing/conus_20240221.h5&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;features_fpath&quot;</span><span class="p">:</span> <span class="s2">&quot;/projects/rev/projects/wowts/data/20240223_poi_trans_feats.gpkg&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;capacity_class&quot;</span><span class="p">:</span> <span class="s2">&quot;1000&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;cost_layers&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;tie_line_costs_</span><span class="si">{}</span><span class="s2">MW&quot;</span><span class="p">,</span> <span class="s2">&quot;wet_costs&quot;</span><span class="p">],</span>
+  <span class="s2">&quot;length_invariant_cost_layers&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;landfall_costs&quot;</span><span class="p">],</span>
+  <span class="s2">&quot;barrier_mult&quot;</span><span class="p">:</span> <span class="s2">&quot;5000&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;resolution&quot;</span><span class="p">:</span> <span class="mi">157</span><span class="p">,</span>
+  <span class="s2">&quot;radius&quot;</span><span class="p">:</span> <span class="mi">777</span><span class="p">,</span>
+  <span class="s2">&quot;expand_radius&quot;</span><span class="p">:</span> <span class="n">false</span><span class="p">,</span>
+  <span class="s2">&quot;save_paths&quot;</span><span class="p">:</span> <span class="n">true</span><span class="p">,</span>
+  <span class="s2">&quot;simplify_geo&quot;</span><span class="p">:</span> <span class="mi">20</span><span class="p">,</span>
+  <span class="s2">&quot;sc_point_gids&quot;</span><span class="p">:</span> <span class="s2">&quot;sc_points.csv&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="post-processing">
+<h4>Post processing<a class="headerlink" href="#post-processing" title="Link to this heading"></a></h4>
+<p>Running an analysis on multiple nodes will result in multiple output files. These can be collected via several means. The below command will combine all output files into a single GeoPackage, assuming <code class="docutils literal notranslate"><span class="pre">save_paths</span></code> was enabled. If paths are not saved, the output will consist of multiple CSV files that must be merged manually.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ least-cost-xmission merge-output --out-file combined.gpkg \
+    output_files_*.gpkg
+</pre></div>
+</div>
+<p>Transmission feature categories that are not desired in the final output can be dropped with:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ least-cost-xmission merge-output --out-file combined.gpkg \
+    --drop TransLine --drop LoadCen output_files_*.gpkg
+</pre></div>
+</div>
+<p>Additionally, the results may be split into GeoJSONs by transmission feature connected to with the following. This will not create a combined GeoPackage file. The optional <code class="docutils literal notranslate"><span class="pre">--simplify-geo</span> <span class="pre">YYY</span></code> argument, where <code class="docutils literal notranslate"><span class="pre">YYY</span></code> is a number, can also be used if not set in the config file. Setting <code class="docutils literal notranslate"><span class="pre">simplify-geo</span></code> in the config file results in much faster run times than in post-processing.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ least-cost-xmission merge-output --drop TransLine --split-to-geojson \
+    --out-path ./out output_files_*.gpkg
+</pre></div>
+</div>
+</section>
+<section id="locally-run-an-offshore-analysis-for-a-single-sc-point-plot-the-results-and-save-to-a-geopackage">
+<h4>Locally run an offshore analysis for a single SC point, plot the results, and save to a GeoPackage<a class="headerlink" href="#locally-run-an-offshore-analysis-for-a-single-sc-point-plot-the-results-and-save-to-a-geopackage" title="Link to this heading"></a></h4>
+<p>The processing can also be run within Python. This example uses <code class="docutils literal notranslate"><span class="pre">contextily</span></code> to add a base map to the plot, but is not required. Offshore needs an aggregation “resolution” of 118.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">contextily</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">cx</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rex.utilities.loggers</span><span class="w"> </span><span class="kn">import</span> <span class="n">init_mult</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">reVX.least_cost_xmission.least_cost_xmission</span><span class="w"> </span><span class="kn">import</span> <span class="n">LeastCostXmission</span>
+
+<span class="c1"># Start the logger</span>
+<span class="n">log_modules</span> <span class="o">=</span> <span class="p">[</span><span class="vm">__name__</span><span class="p">,</span> <span class="s1">&#39;reVX&#39;</span><span class="p">,</span> <span class="s1">&#39;reV&#39;</span><span class="p">,</span> <span class="s1">&#39;rex&#39;</span><span class="p">]</span>
+<span class="n">init_mult</span><span class="p">(</span><span class="s1">&#39;run_aoswt&#39;</span><span class="p">,</span> <span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="n">modules</span><span class="o">=</span><span class="n">log_modules</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">cost_fpath</span> <span class="o">=</span> <span class="s1">&#39;/shared-projects/rev/transmission_tables/least_cost/offshore/aoswt_costs.h5&#39;</span>
+<span class="n">features_fpath</span> <span class="o">=</span> <span class="s1">&#39;/shared-projects/rev/transmission_tables/least_cost/offshore/aoswt_pois.gpkg&#39;</span>
+<span class="n">sc_point_gid</span> <span class="o">=</span> <span class="mi">51085</span>
+
+<span class="c1"># Calculate paths</span>
+<span class="n">lcx</span> <span class="o">=</span> <span class="n">LeastCostXmission</span><span class="p">(</span><span class="n">cost_fpath</span><span class="p">,</span> <span class="n">features_fpath</span><span class="p">,</span> <span class="n">resolution</span><span class="o">=</span><span class="mi">118</span><span class="p">)</span>
+<span class="n">paths</span> <span class="o">=</span> <span class="n">lcx</span><span class="o">.</span><span class="n">process_sc_points</span><span class="p">(</span><span class="s1">&#39;100&#39;</span><span class="p">,</span> <span class="n">sc_point_gids</span><span class="o">=</span><span class="p">[</span><span class="n">sc_point_gid</span><span class="p">],</span> <span class="n">save_paths</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                               <span class="n">max_workers</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">radius</span><span class="o">=</span><span class="mi">5000</span><span class="p">)</span>
+
+<span class="c1"># Plot the paths</span>
+<span class="n">paths</span> <span class="o">=</span> <span class="n">paths</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="n">epsg</span><span class="o">=</span><span class="mi">3857</span><span class="p">)</span>
+<span class="n">ax</span> <span class="o">=</span> <span class="n">paths</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span><span class="mi">20</span><span class="p">),</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">)</span>
+<span class="n">cx</span><span class="o">.</span><span class="n">add_basemap</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="n">cx</span><span class="o">.</span><span class="n">providers</span><span class="o">.</span><span class="n">Stamen</span><span class="o">.</span><span class="n">TonerLite</span><span class="p">)</span>
+
+<span class="c1"># Save to a GeoPackage</span>
+<span class="n">paths</span><span class="o">.</span><span class="n">to_file</span><span class="p">(</span><span class="s1">&#39;example.gpkg&#39;</span><span class="p">,</span> <span class="n">driver</span><span class="o">=</span><span class="s1">&#39;GPKG&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="examples.setbacks.html" class="btn btn-neutral float-left" title="reVX Setbacks" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../_autosummary/reVX.html" class="btn btn-neutral float-right" title="reVX" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, Alliance for Sustainable Energy, LLC.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

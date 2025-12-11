@@ -1,0 +1,78 @@
+reVX.config.least\_cost\_xmission.LeastCostXmissionConfig
+=========================================================
+
+.. currentmodule:: reVX.config.least_cost_xmission
+
+.. autoclass:: LeastCostXmissionConfig
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~LeastCostXmissionConfig.check_files
+      ~LeastCostXmissionConfig.check_overwrite_keys
+      ~LeastCostXmissionConfig.clear
+      ~LeastCostXmissionConfig.copy
+      ~LeastCostXmissionConfig.fromkeys
+      ~LeastCostXmissionConfig.get
+      ~LeastCostXmissionConfig.items
+      ~LeastCostXmissionConfig.keys
+      ~LeastCostXmissionConfig.pop
+      ~LeastCostXmissionConfig.popitem
+      ~LeastCostXmissionConfig.resolve_path
+      ~LeastCostXmissionConfig.set_self_dict
+      ~LeastCostXmissionConfig.setdefault
+      ~LeastCostXmissionConfig.str_replace_and_resolve
+      ~LeastCostXmissionConfig.update
+      ~LeastCostXmissionConfig.values
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~LeastCostXmissionConfig.NAME
+      ~LeastCostXmissionConfig.REQUIREMENTS
+      ~LeastCostXmissionConfig.STR_REP
+      ~LeastCostXmissionConfig.analysis_years
+      ~LeastCostXmissionConfig.barrier_mult
+      ~LeastCostXmissionConfig.capacity_class
+      ~LeastCostXmissionConfig.cell_size
+      ~LeastCostXmissionConfig.clipping_buffer
+      ~LeastCostXmissionConfig.config_dir
+      ~LeastCostXmissionConfig.config_keys
+      ~LeastCostXmissionConfig.cost_fpath
+      ~LeastCostXmissionConfig.cost_layers
+      ~LeastCostXmissionConfig.execution_control
+      ~LeastCostXmissionConfig.expand_radius
+      ~LeastCostXmissionConfig.features_fpath
+      ~LeastCostXmissionConfig.iso_regions_layer_name
+      ~LeastCostXmissionConfig.length_invariant_cost_layers
+      ~LeastCostXmissionConfig.length_mult_kind
+      ~LeastCostXmissionConfig.log_directory
+      ~LeastCostXmissionConfig.log_level
+      ~LeastCostXmissionConfig.min_line_length
+      ~LeastCostXmissionConfig.mp_delay
+      ~LeastCostXmissionConfig.name
+      ~LeastCostXmissionConfig.nn_sinks
+      ~LeastCostXmissionConfig.radius
+      ~LeastCostXmissionConfig.region_identifier_column
+      ~LeastCostXmissionConfig.regions_fpath
+      ~LeastCostXmissionConfig.resolution
+      ~LeastCostXmissionConfig.save_paths
+      ~LeastCostXmissionConfig.sc_point_gids
+      ~LeastCostXmissionConfig.simplify_geo
+      ~LeastCostXmissionConfig.tb_layer_name
+      ~LeastCostXmissionConfig.tracked_layers
+      ~LeastCostXmissionConfig.xmission_config
+   
+   

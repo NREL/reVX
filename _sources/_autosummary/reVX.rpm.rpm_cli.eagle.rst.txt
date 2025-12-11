@@ -1,0 +1,6 @@
+reVX.rpm.rpm\_cli.eagle
+=======================
+
+.. currentmodule:: reVX.rpm.rpm_cli
+
+.. autofunction:: eagle

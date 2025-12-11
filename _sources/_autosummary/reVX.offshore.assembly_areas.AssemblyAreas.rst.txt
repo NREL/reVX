@@ -1,0 +1,32 @@
+reVX.offshore.assembly\_areas.AssemblyAreas
+===========================================
+
+.. currentmodule:: reVX.offshore.assembly_areas
+
+.. autoclass:: AssemblyAreas
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~AssemblyAreas.distance_to_ports
+      ~AssemblyAreas.run
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~AssemblyAreas.DIST_COL
+      ~AssemblyAreas.assembly_areas
+   
+   

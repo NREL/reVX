@@ -1,0 +1,907 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>reVX.least_cost_xmission.layers.masks &mdash; reVX 0.5.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css?v=76b2166b" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=e1a677a5"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            reVX
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../index.html">Home page</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../misc/installation_usage.html">Installation and Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../misc/installation.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../misc/installation.html#recommended-citation">Recommended Citation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../misc/installation.html#command-line-tools">Command Line Tools</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../misc/examples.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../misc/examples.rpm.html">Resource Planning Model (RPM)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../misc/examples.rpm.html#rev-rpm-cli">reV-RPM CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../misc/examples.rpm.html#rpm-sub-package">RPM sub-package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../misc/examples.setbacks.html">reVX Setbacks</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../misc/examples.setbacks.html#computing-setbacks-for-conus">Computing setbacks for CONUS</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../misc/examples.setbacks.html#ordinance-database">Ordinance database</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../misc/examples.setbacks.html#config-file-setup">Config file setup</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../misc/examples.setbacks.html#execution">Execution</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../misc/examples.setbacks.html#merging">Merging</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../misc/examples.setbacks.html#advanced-topics">Advanced Topics</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../misc/examples.setbacks.html#partial-setbacks">Partial Setbacks</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../misc/examples.setbacks.html#writing-directly-to-hdf5-files">Writing directly to HDF5 files</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../misc/examples.setbacks.html#feature-specific-generic-multipliers">Feature-specific generic multipliers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../misc/examples.setbacks.html#custom-setbacks-computations">Custom setbacks computations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../misc/examples.setbacks.html#batched-execution">Batched execution</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../misc/examples.setbacks.html#job-status">Job Status</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../misc/examples.transmission.html">reVX LCP</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../misc/examples.transmission.html#h5-layer-file-creation">H5 Layer File Creation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../misc/examples.transmission.html#masks">Masks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../misc/examples.transmission.html#layer-creation-configuration-file">Layer Creation Configuration File</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../misc/examples.transmission.html#required-keys">Required Keys</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../misc/examples.transmission.html#optional-keys">Optional Keys</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../misc/examples.transmission.html#action-keys">Action Keys</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../misc/examples.transmission.html#layer-creation-config-file-examples">Layer Creation Config File Examples</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../misc/examples.transmission.html#running-the-layer-creator">Running the Layer Creator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../misc/examples.transmission.html#conus-onshore-example">CONUS (Onshore) Example</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../misc/examples.transmission.html#costs">Costs</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../misc/examples.transmission.html#reinforced-transmission">Reinforced Transmission</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../misc/examples.transmission.html#key-assumptions-under-this-approach">Key assumptions under this approach:</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../misc/examples.transmission.html#substation-connections-only-old">Substation connections only (OLD)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../misc/examples.transmission.html#substation-and-tie-line-connections-new">Substation and tie-line connections (New)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../misc/examples.transmission.html#offshore-least-cost-paths">Offshore Least Cost Paths</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../misc/examples.transmission.html#nomenclature-note">Nomenclature Note</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../misc/examples.transmission.html#offshore-workflow">Offshore Workflow</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../misc/examples.transmission.html#offshore-examples">Offshore Examples</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../_autosummary/reVX.html">API reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../_autosummary/reVX.cli.html">reVX.cli</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../_autosummary/reVX.config.html">reVX.config</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.config.least_cost_xmission.html">reVX.config.least_cost_xmission</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.config.least_cost_xmission.LeastCostPathsConfig.html">reVX.config.least_cost_xmission.LeastCostPathsConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.config.least_cost_xmission.LeastCostXmissionConfig.html">reVX.config.least_cost_xmission.LeastCostXmissionConfig</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.config.offshore.html">reVX.config.offshore</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.config.offshore.AssemblyAreasConfig.html">reVX.config.offshore.AssemblyAreasConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.config.offshore.DistToPortsConfig.html">reVX.config.offshore.DistToPortsConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.config.offshore.OffshoreInputsConfig.html">reVX.config.offshore.OffshoreInputsConfig</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.config.reeds.html">reVX.config.reeds</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.config.reeds.ClassifyConfigGroup.html">reVX.config.reeds.ClassifyConfigGroup</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.config.reeds.ProfilesConfigGroup.html">reVX.config.reeds.ProfilesConfigGroup</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.config.reeds.ReedsConfig.html">reVX.config.reeds.ReedsConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.config.reeds.TimeslicesConfigGroup.html">reVX.config.reeds.TimeslicesConfigGroup</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.config.rpm.html">reVX.config.rpm</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.config.rpm.ClusterConfigGroup.html">reVX.config.rpm.ClusterConfigGroup</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.config.rpm.RPMConfig.html">reVX.config.rpm.RPMConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.config.rpm.RepProfilesConfigGroup.html">reVX.config.rpm.RepProfilesConfigGroup</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.config.transmission_layer_creation.html">reVX.config.transmission_layer_creation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.config.transmission_layer_creation.LayerBuildComponents.html">reVX.config.transmission_layer_creation.LayerBuildComponents</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.config.transmission_layer_creation.Layers.html">reVX.config.transmission_layer_creation.Layers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.config.transmission_layer_creation.DryCosts.html">reVX.config.transmission_layer_creation.DryCosts</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.config.transmission_layer_creation.LayerBuildConfig.html">reVX.config.transmission_layer_creation.LayerBuildConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.config.transmission_layer_creation.LayerConfig.html">reVX.config.transmission_layer_creation.LayerConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.config.transmission_layer_creation.MergeFrictionBarriers.html">reVX.config.transmission_layer_creation.MergeFrictionBarriers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.config.transmission_layer_creation.RangeConfig.html">reVX.config.transmission_layer_creation.RangeConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.config.transmission_layer_creation.Rasterize.html">reVX.config.transmission_layer_creation.Rasterize</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.config.transmission_layer_creation.TransmissionLayerCreationConfig.html">reVX.config.transmission_layer_creation.TransmissionLayerCreationConfig</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.config.turbine_flicker.html">reVX.config.turbine_flicker</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.config.turbine_flicker.TurbineFlickerConfig.html">reVX.config.turbine_flicker.TurbineFlickerConfig</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.config.wind_dirs.html">reVX.config.wind_dirs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.config.wind_dirs.MeanWindDirsConfig.html">reVX.config.wind_dirs.MeanWindDirsConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.config.wind_dirs.ProminentWindDirsConfig.html">reVX.config.wind_dirs.ProminentWindDirsConfig</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../_autosummary/reVX.handlers.html">reVX.handlers</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.handlers.database.html">reVX.handlers.database</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.handlers.database.Database.html">reVX.handlers.database.Database</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.handlers.geopackage.html">reVX.handlers.geopackage</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.handlers.geopackage.GPKGMeta.html">reVX.handlers.geopackage.GPKGMeta</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.handlers.geotiff.html">reVX.handlers.geotiff</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.handlers.geotiff.Geotiff.html">reVX.handlers.geotiff.Geotiff</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.handlers.layered_h5.html">reVX.handlers.layered_h5</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.handlers.layered_h5.check_geotiff.html">reVX.handlers.layered_h5.check_geotiff</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.handlers.layered_h5.crs_match.html">reVX.handlers.layered_h5.crs_match</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.handlers.layered_h5.LayeredH5.html">reVX.handlers.layered_h5.LayeredH5</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.handlers.layered_h5.LayeredTransmissionH5.html">reVX.handlers.layered_h5.LayeredTransmissionH5</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.handlers.outputs.html">reVX.handlers.outputs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.handlers.outputs.Outputs.html">reVX.handlers.outputs.Outputs</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.handlers.sc_points.html">reVX.handlers.sc_points</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.handlers.sc_points.Point.html">reVX.handlers.sc_points.Point</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.handlers.sc_points.SupplyCurvePoints.html">reVX.handlers.sc_points.SupplyCurvePoints</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../_autosummary/reVX.hybrid_stats.html">reVX.hybrid_stats</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.hybrid_stats.hybrid_stats.html">reVX.hybrid_stats.hybrid_stats</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.hybrid_stats.hybrid_stats.kendall_tau.html">reVX.hybrid_stats.hybrid_stats.kendall_tau</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.hybrid_stats.hybrid_stats.pearson_correlation.html">reVX.hybrid_stats.hybrid_stats.pearson_correlation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.hybrid_stats.hybrid_stats.spearman_correlation.html">reVX.hybrid_stats.hybrid_stats.spearman_correlation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.hybrid_stats.hybrid_stats.HybridCrossCorrelation.html">reVX.hybrid_stats.hybrid_stats.HybridCrossCorrelation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.hybrid_stats.hybrid_stats.HybridStabilityCoefficient.html">reVX.hybrid_stats.hybrid_stats.HybridStabilityCoefficient</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.hybrid_stats.hybrid_stats.HybridStats.html">reVX.hybrid_stats.hybrid_stats.HybridStats</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.hybrid_stats.temporal_agg.html">reVX.hybrid_stats.temporal_agg</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.hybrid_stats.temporal_agg.get_time_index.html">reVX.hybrid_stats.temporal_agg.get_time_index</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.hybrid_stats.temporal_agg.DatasetAgg.html">reVX.hybrid_stats.temporal_agg.DatasetAgg</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.hybrid_stats.temporal_agg.TemporalAgg.html">reVX.hybrid_stats.temporal_agg.TemporalAgg</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../_autosummary/reVX.least_cost_xmission.html">reVX.least_cost_xmission</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.least_cost_xmission.config.html">reVX.least_cost_xmission.config</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.least_cost_xmission.config.constants.html">reVX.least_cost_xmission.config.constants</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.least_cost_xmission.config.xmission_config.html">reVX.least_cost_xmission.config.xmission_config</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.least_cost_xmission.layers.html">reVX.least_cost_xmission.layers</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.least_cost_xmission.layers.base.html">reVX.least_cost_xmission.layers.base</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.least_cost_xmission.layers.dry_cost_creator.html">reVX.least_cost_xmission.layers.dry_cost_creator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.least_cost_xmission.layers.layer_creator.html">reVX.least_cost_xmission.layers.layer_creator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.least_cost_xmission.layers.masks.html">reVX.least_cost_xmission.layers.masks</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.least_cost_xmission.layers.utils.html">reVX.least_cost_xmission.layers.utils</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.least_cost_xmission.least_cost_paths.html">reVX.least_cost_xmission.least_cost_paths</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.least_cost_xmission.least_cost_paths.min_reinforcement_costs.html">reVX.least_cost_xmission.least_cost_paths.min_reinforcement_costs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.least_cost_xmission.least_cost_paths.LeastCostPaths.html">reVX.least_cost_xmission.least_cost_paths.LeastCostPaths</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.least_cost_xmission.least_cost_paths.ReinforcementPaths.html">reVX.least_cost_xmission.least_cost_paths.ReinforcementPaths</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.least_cost_xmission.least_cost_paths_cli.html">reVX.least_cost_xmission.least_cost_paths_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.least_cost_xmission.least_cost_paths_cli.eagle.html">reVX.least_cost_xmission.least_cost_paths_cli.eagle</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.least_cost_xmission.least_cost_paths_cli.get_node_cmd.html">reVX.least_cost_xmission.least_cost_paths_cli.get_node_cmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.least_cost_xmission.least_cost_paths_cli.run_local.html">reVX.least_cost_xmission.least_cost_paths_cli.run_local</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.least_cost_xmission.least_cost_xmission.html">reVX.least_cost_xmission.least_cost_xmission</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.least_cost_xmission.least_cost_xmission.region_mapper.html">reVX.least_cost_xmission.least_cost_xmission.region_mapper</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.least_cost_xmission.least_cost_xmission.LeastCostXmission.html">reVX.least_cost_xmission.least_cost_xmission.LeastCostXmission</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.least_cost_xmission.least_cost_xmission.RegionalXmission.html">reVX.least_cost_xmission.least_cost_xmission.RegionalXmission</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.least_cost_xmission.least_cost_xmission_cli.html">reVX.least_cost_xmission.least_cost_xmission_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.least_cost_xmission.least_cost_xmission_cli.eagle.html">reVX.least_cost_xmission.least_cost_xmission_cli.eagle</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.least_cost_xmission.least_cost_xmission_cli.get_node_cmd.html">reVX.least_cost_xmission.least_cost_xmission_cli.get_node_cmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.least_cost_xmission.least_cost_xmission_cli.run_local.html">reVX.least_cost_xmission.least_cost_xmission_cli.run_local</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.least_cost_xmission.trans_cap_costs.html">reVX.least_cost_xmission.trans_cap_costs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.least_cost_xmission.trans_cap_costs.RegionalTransCapCosts.html">reVX.least_cost_xmission.trans_cap_costs.RegionalTransCapCosts</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.least_cost_xmission.trans_cap_costs.ReinforcementLineCosts.html">reVX.least_cost_xmission.trans_cap_costs.ReinforcementLineCosts</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.least_cost_xmission.trans_cap_costs.TieLineCosts.html">reVX.least_cost_xmission.trans_cap_costs.TieLineCosts</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.least_cost_xmission.trans_cap_costs.TransCapCosts.html">reVX.least_cost_xmission.trans_cap_costs.TransCapCosts</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.least_cost_xmission.transmission_layer_creator_cli.html">reVX.least_cost_xmission.transmission_layer_creator_cli</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../_autosummary/reVX.offshore.html">reVX.offshore</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.offshore.assembly_areas.html">reVX.offshore.assembly_areas</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.offshore.assembly_areas.AssemblyAreas.html">reVX.offshore.assembly_areas.AssemblyAreas</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.offshore.assembly_areas_cli.html">reVX.offshore.assembly_areas_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.offshore.assembly_areas_cli.eagle.html">reVX.offshore.assembly_areas_cli.eagle</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.offshore.assembly_areas_cli.get_node_cmd.html">reVX.offshore.assembly_areas_cli.get_node_cmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.offshore.assembly_areas_cli.run_local.html">reVX.offshore.assembly_areas_cli.run_local</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.offshore.dist_to_ports.html">reVX.offshore.dist_to_ports</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.offshore.dist_to_ports.DistanceToPorts.html">reVX.offshore.dist_to_ports.DistanceToPorts</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.offshore.dist_to_ports_cli.html">reVX.offshore.dist_to_ports_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.offshore.dist_to_ports_cli.eagle.html">reVX.offshore.dist_to_ports_cli.eagle</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.offshore.dist_to_ports_cli.get_node_cmd.html">reVX.offshore.dist_to_ports_cli.get_node_cmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.offshore.dist_to_ports_cli.run_local.html">reVX.offshore.dist_to_ports_cli.run_local</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.offshore.dist_to_ports_converter.html">reVX.offshore.dist_to_ports_converter</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.offshore.dist_to_ports_converter.DistToPortsConverter.html">reVX.offshore.dist_to_ports_converter.DistToPortsConverter</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.offshore.offshore_inputs.html">reVX.offshore.offshore_inputs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.offshore.offshore_inputs.OffshoreInputs.html">reVX.offshore.offshore_inputs.OffshoreInputs</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.offshore.offshore_inputs_cli.html">reVX.offshore.offshore_inputs_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.offshore.offshore_inputs_cli.eagle.html">reVX.offshore.offshore_inputs_cli.eagle</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.offshore.offshore_inputs_cli.get_node_cmd.html">reVX.offshore.offshore_inputs_cli.get_node_cmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.offshore.offshore_inputs_cli.run_local.html">reVX.offshore.offshore_inputs_cli.run_local</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../_autosummary/reVX.plexos.html">reVX.plexos</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.plexos.base.html">reVX.plexos.base</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.plexos.base.BaseProfileAggregation.html">reVX.plexos.base.BaseProfileAggregation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.plexos.base.PlexosNode.html">reVX.plexos.base.PlexosNode</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.plexos.dpv_plexos.html">reVX.plexos.dpv_plexos</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.plexos.dpv_plexos.DpvPlexosAggregation.html">reVX.plexos.dpv_plexos.DpvPlexosAggregation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.plexos.dpv_plexos.DpvResource.html">reVX.plexos.dpv_plexos.DpvResource</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.plexos.plexos_plants.html">reVX.plexos.plexos_plants</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.plexos.plexos_plants.PlantProfileAggregation.html">reVX.plexos.plexos_plants.PlantProfileAggregation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.plexos.plexos_plants.Plants.html">reVX.plexos.plexos_plants.Plants</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.plexos.plexos_plants.PlexosPlants.html">reVX.plexos.plexos_plants.PlexosPlants</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.plexos.plexos_plants_cli.html">reVX.plexos.plexos_plants_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.plexos.plexos_plants_cli.get_node_cmd.html">reVX.plexos.plexos_plants_cli.get_node_cmd</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.plexos.rev_reeds_plexos.html">reVX.plexos.rev_reeds_plexos</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.plexos.rev_reeds_plexos.PlexosAggregation.html">reVX.plexos.rev_reeds_plexos.PlexosAggregation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.plexos.rev_reeds_plexos.RevReedsPlexosManager.html">reVX.plexos.rev_reeds_plexos.RevReedsPlexosManager</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.plexos.rev_reeds_plexos_cli.html">reVX.plexos.rev_reeds_plexos_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.plexos.rev_reeds_plexos_cli.get_node_cmd.html">reVX.plexos.rev_reeds_plexos_cli.get_node_cmd</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.plexos.simple_plant_builder.html">reVX.plexos.simple_plant_builder</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.plexos.simple_plant_builder.SimplePlantBuilder.html">reVX.plexos.simple_plant_builder.SimplePlantBuilder</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.plexos.simple_plant_builder_cli.html">reVX.plexos.simple_plant_builder_cli</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.plexos.utilities.html">reVX.plexos.utilities</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.plexos.utilities.get_coord_labels.html">reVX.plexos.utilities.get_coord_labels</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.plexos.utilities.parse_table_name.html">reVX.plexos.utilities.parse_table_name</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.plexos.utilities.DataCleaner.html">reVX.plexos.utilities.DataCleaner</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.plexos.utilities.ProjectGidHandler.html">reVX.plexos.utilities.ProjectGidHandler</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../_autosummary/reVX.pras.html">reVX.pras</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.pras.rev_reeds_pras.html">reVX.pras.rev_reeds_pras</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.pras.rev_reeds_pras.PrasAggregation.html">reVX.pras.rev_reeds_pras.PrasAggregation</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../_autosummary/reVX.red_e.html">reVX.red_e</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.red_e.tech_potential.html">reVX.red_e.tech_potential</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.red_e.tech_potential.TechPotential.html">reVX.red_e.tech_potential.TechPotential</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../_autosummary/reVX.rpm.html">reVX.rpm</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.rpm.rpm_cli.html">reVX.rpm.rpm_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.rpm.rpm_cli.eagle.html">reVX.rpm.rpm_cli.eagle</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.rpm.rpm_cli.get_node_cmd.html">reVX.rpm.rpm_cli.get_node_cmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.rpm.rpm_cli.run_local.html">reVX.rpm.rpm_cli.run_local</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.rpm.rpm_clusters.html">reVX.rpm.rpm_clusters</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.rpm.rpm_clusters.RPMClusters.html">reVX.rpm.rpm_clusters.RPMClusters</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.rpm.rpm_clusters.RPMWavelets.html">reVX.rpm.rpm_clusters.RPMWavelets</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.rpm.rpm_manager.html">reVX.rpm.rpm_manager</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.rpm.rpm_manager.RPMClusterManager.html">reVX.rpm.rpm_manager.RPMClusterManager</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.rpm.rpm_output.html">reVX.rpm.rpm_output</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.rpm.rpm_output.RPMOutput.html">reVX.rpm.rpm_output.RPMOutput</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.rpm.rpm_output.RepresentativeProfiles.html">reVX.rpm.rpm_output.RepresentativeProfiles</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../_autosummary/reVX.setbacks.html">reVX.setbacks</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.setbacks.base.html">reVX.setbacks.base</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.setbacks.base.BUFFERS.html">reVX.setbacks.base.BUFFERS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.setbacks.base.FEATURE_FILTERS.html">reVX.setbacks.base.FEATURE_FILTERS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.setbacks.base.AbstractBaseSetbacks.html">reVX.setbacks.base.AbstractBaseSetbacks</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.setbacks.base.Rasterizer.html">reVX.setbacks.base.Rasterizer</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.setbacks.functions.html">reVX.setbacks.functions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.setbacks.functions.features_clipped_to_county.html">reVX.setbacks.functions.features_clipped_to_county</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.setbacks.functions.features_with_centroid_in_county.html">reVX.setbacks.functions.features_with_centroid_in_county</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.setbacks.functions.parcel_buffer.html">reVX.setbacks.functions.parcel_buffer</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.setbacks.functions.positive_buffer.html">reVX.setbacks.functions.positive_buffer</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.setbacks.regulations.html">reVX.setbacks.regulations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.setbacks.regulations.select_setback_regulations.html">reVX.setbacks.regulations.select_setback_regulations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.setbacks.regulations.validate_setback_regulations_input.html">reVX.setbacks.regulations.validate_setback_regulations_input</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.setbacks.regulations.SetbackRegulations.html">reVX.setbacks.regulations.SetbackRegulations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.setbacks.regulations.WindSetbackRegulations.html">reVX.setbacks.regulations.WindSetbackRegulations</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.setbacks.setbacks.html">reVX.setbacks.setbacks</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.setbacks.setbacks.SETBACK_SPECS.html">reVX.setbacks.setbacks.SETBACK_SPECS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.setbacks.setbacks.setbacks_calculator.html">reVX.setbacks.setbacks.setbacks_calculator</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.setbacks.setbacks_cli.html">reVX.setbacks.setbacks_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.setbacks.setbacks_cli.compute_setbacks.html">reVX.setbacks.setbacks_cli.compute_setbacks</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.setbacks.setbacks_cli.merge_setbacks.html">reVX.setbacks.setbacks_cli.merge_setbacks</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.setbacks.setbacks_cli.preprocess_merge_config.html">reVX.setbacks.setbacks_cli.preprocess_merge_config</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.setbacks.setbacks_cli.preprocess_setbacks_config.html">reVX.setbacks.setbacks_cli.preprocess_setbacks_config</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.setbacks.setbacks_converter.html">reVX.setbacks.setbacks_converter</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.setbacks.setbacks_converter.parse_setbacks.html">reVX.setbacks.setbacks_converter.parse_setbacks</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.setbacks.setbacks_converter.SetbacksConverter.html">reVX.setbacks.setbacks_converter.SetbacksConverter</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../_autosummary/reVX.turbine_flicker.html">reVX.turbine_flicker</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.turbine_flicker.regulations.html">reVX.turbine_flicker.regulations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.turbine_flicker.regulations.FlickerRegulations.html">reVX.turbine_flicker.regulations.FlickerRegulations</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.turbine_flicker.turbine_flicker.html">reVX.turbine_flicker.turbine_flicker</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.turbine_flicker.turbine_flicker.compute_flicker_exclusions.html">reVX.turbine_flicker.turbine_flicker.compute_flicker_exclusions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.turbine_flicker.turbine_flicker.TurbineFlicker.html">reVX.turbine_flicker.turbine_flicker.TurbineFlicker</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.turbine_flicker.turbine_flicker_cli.html">reVX.turbine_flicker.turbine_flicker_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.turbine_flicker.turbine_flicker_cli.eagle.html">reVX.turbine_flicker.turbine_flicker_cli.eagle</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.turbine_flicker.turbine_flicker_cli.flicker_fn_out.html">reVX.turbine_flicker.turbine_flicker_cli.flicker_fn_out</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.turbine_flicker.turbine_flicker_cli.get_node_cmd.html">reVX.turbine_flicker.turbine_flicker_cli.get_node_cmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.turbine_flicker.turbine_flicker_cli.run_local.html">reVX.turbine_flicker.turbine_flicker_cli.run_local</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../_autosummary/reVX.utilities.html">reVX.utilities</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.utilities.cluster_methods.html">reVX.utilities.cluster_methods</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.utilities.cluster_methods.ClusteringMethods.html">reVX.utilities.cluster_methods.ClusteringMethods</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.utilities.exceptions.html">reVX.utilities.exceptions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.utilities.exceptions.GeoTiffKeyError.html">reVX.utilities.exceptions.GeoTiffKeyError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.utilities.exceptions.InvalidMCPStartValueError.html">reVX.utilities.exceptions.InvalidMCPStartValueError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.utilities.exceptions.LeastCostPathNotFoundError.html">reVX.utilities.exceptions.LeastCostPathNotFoundError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.utilities.exceptions.ProfileCheckError.html">reVX.utilities.exceptions.ProfileCheckError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.utilities.exceptions.RPMRuntimeError.html">reVX.utilities.exceptions.RPMRuntimeError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.utilities.exceptions.RPMTypeError.html">reVX.utilities.exceptions.RPMTypeError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.utilities.exceptions.RPMValueError.html">reVX.utilities.exceptions.RPMValueError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.utilities.exceptions.ReedsKeyError.html">reVX.utilities.exceptions.ReedsKeyError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.utilities.exceptions.ReedsRuntimeError.html">reVX.utilities.exceptions.ReedsRuntimeError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.utilities.exceptions.ReedsValueError.html">reVX.utilities.exceptions.ReedsValueError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.utilities.exceptions.SupplyCurvePointCapacityError.html">reVX.utilities.exceptions.SupplyCurvePointCapacityError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.utilities.exceptions.reVXError.html">reVX.utilities.exceptions.reVXError</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.utilities.exclusions.html">reVX.utilities.exclusions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.utilities.exclusions.AbstractBaseExclusionsMerger.html">reVX.utilities.exclusions.AbstractBaseExclusionsMerger</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.utilities.exclusions.AbstractExclusionCalculatorInterface.html">reVX.utilities.exclusions.AbstractExclusionCalculatorInterface</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.utilities.fix_sc_lat_lons.html">reVX.utilities.fix_sc_lat_lons</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.utilities.fix_sc_lat_lons.fix_sc_lat_lon.html">reVX.utilities.fix_sc_lat_lons.fix_sc_lat_lon</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.utilities.forecasts.html">reVX.utilities.forecasts</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.utilities.forecasts.FcstUtils.html">reVX.utilities.forecasts.FcstUtils</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.utilities.output_extractor.html">reVX.utilities.output_extractor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.utilities.rasterize.html">reVX.utilities.rasterize</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.utilities.reeds_cols.html">reVX.utilities.reeds_cols</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.utilities.reeds_cols.add_county_info.html">reVX.utilities.reeds_cols.add_county_info</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.utilities.reeds_cols.add_extra_data.html">reVX.utilities.reeds_cols.add_extra_data</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.utilities.reeds_cols.add_nrel_regions.html">reVX.utilities.reeds_cols.add_nrel_regions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.utilities.reeds_cols.add_reeds_columns.html">reVX.utilities.reeds_cols.add_reeds_columns</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.utilities.region_classifier.html">reVX.utilities.region_classifier</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.utilities.region_classifier.RegionClassifier.html">reVX.utilities.region_classifier.RegionClassifier</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.utilities.regulations.html">reVX.utilities.regulations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.utilities.regulations.AbstractBaseRegulations.html">reVX.utilities.regulations.AbstractBaseRegulations</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.utilities.utilities.html">reVX.utilities.utilities</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.utilities.utilities.centered_pixels.html">reVX.utilities.utilities.centered_pixels</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.utilities.utilities.coordinate_distance.html">reVX.utilities.utilities.coordinate_distance</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.utilities.utilities.load_fips_to_state_map.html">reVX.utilities.utilities.load_fips_to_state_map</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.utilities.utilities.log_versions.html">reVX.utilities.utilities.log_versions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.utilities.utilities.rev_sc_to_geotiff_arr.html">reVX.utilities.utilities.rev_sc_to_geotiff_arr</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.utilities.utilities.to_geo.html">reVX.utilities.utilities.to_geo</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.utilities.utilities.transform_pixels_to_lat_lon.html">reVX.utilities.utilities.transform_pixels_to_lat_lon</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../_autosummary/reVX.version.html">reVX.version</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../_autosummary/reVX.wind_dirs.html">reVX.wind_dirs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.wind_dirs.mean_wind_dirs.html">reVX.wind_dirs.mean_wind_dirs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.wind_dirs.mean_wind_dirs.MeanWindDirections.html">reVX.wind_dirs.mean_wind_dirs.MeanWindDirections</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.wind_dirs.mean_wind_dirs_cli.html">reVX.wind_dirs.mean_wind_dirs_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.wind_dirs.mean_wind_dirs_cli.eagle.html">reVX.wind_dirs.mean_wind_dirs_cli.eagle</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.wind_dirs.mean_wind_dirs_cli.get_node_cmd.html">reVX.wind_dirs.mean_wind_dirs_cli.get_node_cmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.wind_dirs.mean_wind_dirs_cli.run_local.html">reVX.wind_dirs.mean_wind_dirs_cli.run_local</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.wind_dirs.mean_wind_dirs_point.html">reVX.wind_dirs.mean_wind_dirs_point</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.html">reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.wind_dirs.prominent_wind_dirs.html">reVX.wind_dirs.prominent_wind_dirs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.wind_dirs.prominent_wind_dirs.ProminentWindDirections.html">reVX.wind_dirs.prominent_wind_dirs.ProminentWindDirections</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_autosummary/reVX.wind_dirs.prominent_wind_dirs_cli.html">reVX.wind_dirs.prominent_wind_dirs_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.wind_dirs.prominent_wind_dirs_cli.eagle.html">reVX.wind_dirs.prominent_wind_dirs_cli.eagle</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.wind_dirs.prominent_wind_dirs_cli.get_node_cmd.html">reVX.wind_dirs.prominent_wind_dirs_cli.get_node_cmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_autosummary/reVX.wind_dirs.prominent_wind_dirs_cli.run_local.html">reVX.wind_dirs.prominent_wind_dirs_cli.run_local</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../_cli/cli.html">CLI reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../_cli/least-cost-paths.html">least-cost-paths</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/least-cost-paths.html#least-cost-paths-add-rr-to-nn">add-rr-to-nn</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/least-cost-paths.html#least-cost-paths-from-config">from-config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/least-cost-paths.html#least-cost-paths-local">local</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/least-cost-paths.html#least-cost-paths-map-ss-to-rr">map-ss-to-rr</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/least-cost-paths.html#least-cost-paths-ss-from-conn">ss-from-conn</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/least-cost-paths.html#least-cost-paths-valid-config-keys">valid-config-keys</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../_cli/least-cost-xmission.html">least-cost-xmission</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/least-cost-xmission.html#least-cost-xmission-from-config">from-config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/least-cost-xmission.html#least-cost-xmission-local">local</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/least-cost-xmission.html#least-cost-xmission-merge-output">merge-output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/least-cost-xmission.html#least-cost-xmission-merge-reinforcement-costs">merge-reinforcement-costs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/least-cost-xmission.html#least-cost-xmission-valid-config-keys">valid-config-keys</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../_cli/mean-wind-dirs.html">mean-wind-dirs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/mean-wind-dirs.html#mean-wind-dirs-from-config">from-config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/mean-wind-dirs.html#mean-wind-dirs-local">local</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/mean-wind-dirs.html#mean-wind-dirs-valid-config-keys">valid-config-keys</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../_cli/offshore-assembly-areas.html">offshore-assembly-areas</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/offshore-assembly-areas.html#offshore-assembly-areas-from-config">from-config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/offshore-assembly-areas.html#offshore-assembly-areas-local">local</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/offshore-assembly-areas.html#offshore-assembly-areas-valid-config-keys">valid-config-keys</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../_cli/offshore-dist-to-ports.html">offshore-dist-to-ports</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/offshore-dist-to-ports.html#offshore-dist-to-ports-from-config">from-config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/offshore-dist-to-ports.html#offshore-dist-to-ports-local">local</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/offshore-dist-to-ports.html#offshore-dist-to-ports-valid-config-keys">valid-config-keys</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../_cli/offshore-inputs.html">offshore-inputs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/offshore-inputs.html#offshore-inputs-from-config">from-config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/offshore-inputs.html#offshore-inputs-local">local</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/offshore-inputs.html#offshore-inputs-valid-config-keys">valid-config-keys</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../_cli/plexos-plants.html">plexos-plants</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/plexos-plants.html#plexos-plants-eagle">eagle</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../_cli/prominent-wind-dirs.html">prominent-wind-dirs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/prominent-wind-dirs.html#prominent-wind-dirs-from-config">from-config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/prominent-wind-dirs.html#prominent-wind-dirs-local">local</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/prominent-wind-dirs.html#prominent-wind-dirs-valid-config-keys">valid-config-keys</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../_cli/reV-plexos.html">reV-plexos</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/reV-plexos.html#rev-plexos-eagle">eagle</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../_cli/reV-rpm.html">reV-rpm</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/reV-rpm.html#rev-rpm-from-config">from-config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/reV-rpm.html#rev-rpm-local">local</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_cli/reV-rpm.html#rev-rpm-local-cluster">cluster</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_cli/reV-rpm.html#rev-rpm-local-rep-profiles">rep-profiles</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/reV-rpm.html#rev-rpm-valid-config-keys">valid-config-keys</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../_cli/reVX.html">reVX</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/reVX.html#revx-add-reeds-cols">add-reeds-cols</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/reVX.html#revx-correct-forecast">correct-forecast</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/reVX.html#revx-exclusions">exclusions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_cli/reVX.html#revx-exclusions-layers-from-h5">layers-from-h5</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_cli/reVX.html#revx-exclusions-layers-to-h5">layers-to-h5</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../_cli/reVX.html#revx-exclusions-mask">mask</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/reVX.html#revx-extract-output-year">extract-output-year</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/reVX.html#revx-fix-rev-sc-lat-lon">fix-rev-sc-lat-lon</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/reVX.html#revx-region-classifier">region-classifier</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/reVX.html#revx-rev-sc-to-gpkg">rev-sc-to-gpkg</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/reVX.html#revx-rev-sc-to-tiff">rev-sc-to-tiff</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../_cli/setbacks.html">setbacks</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/setbacks.html#setbacks-batch">batch</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/setbacks.html#setbacks-compute">compute</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/setbacks.html#setbacks-merge">merge</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/setbacks.html#setbacks-pipeline">pipeline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/setbacks.html#setbacks-reset-status">reset-status</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/setbacks.html#setbacks-script">script</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/setbacks.html#setbacks-status">status</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/setbacks.html#setbacks-template-configs">template-configs</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../_cli/simple-plant-builder.html">simple-plant-builder</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../_cli/transmission-layer-creator.html">transmission-layer-creator</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/transmission-layer-creator.html#transmission-layer-creator-convert-pois">convert-pois</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/transmission-layer-creator.html#transmission-layer-creator-create-h5">create-h5</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/transmission-layer-creator.html#transmission-layer-creator-create-masks">create-masks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/transmission-layer-creator.html#transmission-layer-creator-from-config">from-config</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../_cli/turbine-flicker.html">turbine-flicker</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/turbine-flicker.html#turbine-flicker-from-config">from-config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/turbine-flicker.html#turbine-flicker-local">local</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../_cli/turbine-flicker.html#turbine-flicker-valid-config-keys">valid-config-keys</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">reVX</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">reVX.least_cost_xmission.layers.masks</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for reVX.least_cost_xmission.layers.masks</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Create, load, and store masks to determine land and sea.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">npt</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">reVX.handlers.layered_h5</span><span class="w"> </span><span class="kn">import</span> <span class="n">LayeredTransmissionH5</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">reVX.least_cost_xmission.layers.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">rasterize_shape_file</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="c1"># Mask array</span>
+<span class="n">MaskArr</span> <span class="o">=</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">bool_</span><span class="p">]</span>
+
+<span class="n">MASK_MSG</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;No mask available. Please run create_masks() or load_masks() &#39;</span>
+            <span class="s1">&#39;first.&#39;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Masks">
+<a class="viewcode-back" href="../../../../_autosummary/reVX.least_cost_xmission.layers.masks.Masks.html#reVX.least_cost_xmission.layers.masks.Masks">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Masks</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create, load, and store masks to determine land and sea.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">LANDFALL_MASK_FNAME</span> <span class="o">=</span> <span class="s1">&#39;landfall_mask.tif&#39;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;One pixel width line at shore&quot;&quot;&quot;</span>
+    <span class="n">RAW_LAND_MASK_FNAME</span> <span class="o">=</span> <span class="s1">&#39;raw_land_mask.tif&#39;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Rasterized land vector&quot;&quot;&quot;</span>
+    <span class="n">LAND_MASK_FNAME</span> <span class="o">=</span> <span class="s1">&#39;land_mask.tif&#39;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raw mask - landfall mask&quot;&quot;&quot;</span>
+    <span class="n">OFFSHORE_MASK_FNAME</span> <span class="o">=</span> <span class="s1">&#39;offshore_mask.tif&#39;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Offshore mask filename&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">io_handler</span><span class="p">:</span> <span class="n">LayeredTransmissionH5</span><span class="p">,</span> <span class="n">masks_dir</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        io_handler : :class:`LayeredTransmissionH5`</span>
+<span class="sd">            Transmission IO handler</span>
+<span class="sd">        masks_dir : path-like, optional</span>
+<span class="sd">            Directory for storing/finding mask GeoTIFFs. By default, ``&#39;.&#39;``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_io_handler</span> <span class="o">=</span> <span class="n">io_handler</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_masks_dir</span> <span class="o">=</span> <span class="n">masks_dir</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">masks_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_landfall_mask</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MaskArr</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dry_mask</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MaskArr</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_wet_mask</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MaskArr</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dry_plus_mask</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MaskArr</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_wet_plus_mask</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MaskArr</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">landfall_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MaskArr</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;MaskArr: Landfalls cells mask, only one cell wide &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_landfall_mask</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">MASK_MSG</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_landfall_mask</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">wet_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MaskArr</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;MaskArr: Wet cells mask, does not include landfall cells &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wet_mask</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">MASK_MSG</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wet_mask</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">dry_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MaskArr</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;MaskArr: Dry cells mask, does not include landfall cells &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dry_mask</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">MASK_MSG</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dry_mask</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">dry_plus_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MaskArr</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;MaskArr: Dry cells mask, includes landfall cells &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dry_plus_mask</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_dry_plus_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_or</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dry_mask</span><span class="p">,</span>
+                                                <span class="bp">self</span><span class="o">.</span><span class="n">landfall_mask</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dry_plus_mask</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">wet_plus_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MaskArr</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;MaskArr: Wet cells mask, includes landfall cells &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wet_plus_mask</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_wet_plus_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_or</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wet_mask</span><span class="p">,</span>
+                                                <span class="bp">self</span><span class="o">.</span><span class="n">landfall_mask</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wet_plus_mask</span>
+
+<div class="viewcode-block" id="Masks.create_masks">
+<a class="viewcode-back" href="../../../../_autosummary/reVX.least_cost_xmission.layers.masks.Masks.html#reVX.least_cost_xmission.layers.masks.Masks.create_masks">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_masks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">land_mask_shp_f</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">save_tiff</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+                     <span class="n">reproject_vector</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create the offshore and land mask layers from a polygon land vector</span>
+<span class="sd">        file.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        mask_shp_f : str</span>
+<span class="sd">            Full path to land polygon gpgk or shp file</span>
+<span class="sd">        save_tiff : bool, optional</span>
+<span class="sd">            Save mask as tiff if true. By default, ``True``.</span>
+<span class="sd">        reproject_vector : bool, optional</span>
+<span class="sd">            Reproject CRS of vector to match template raster if True.</span>
+<span class="sd">            By default, ``True``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Creating masks from </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">land_mask_shp_f</span><span class="p">)</span>
+
+        <span class="c1"># Raw land is all land cells, include landfall cells</span>
+        <span class="n">raw_land</span> <span class="o">=</span> <span class="n">rasterize_shape_file</span><span class="p">(</span><span class="n">land_mask_shp_f</span><span class="p">,</span>
+                                        <span class="bp">self</span><span class="o">.</span><span class="n">_io_handler</span><span class="o">.</span><span class="n">profile</span><span class="p">,</span>
+                                        <span class="n">all_touched</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                                        <span class="n">reproject_vector</span><span class="o">=</span><span class="n">reproject_vector</span><span class="p">,</span>
+                                        <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;uint8&#39;</span><span class="p">)</span>
+
+        <span class="n">raw_land_mask</span><span class="p">:</span> <span class="n">MaskArr</span> <span class="o">=</span> <span class="n">raw_land</span> <span class="o">==</span> <span class="mi">1</span>
+
+        <span class="c1"># Offshore mask is inversion of raw land mask</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_wet_mask</span> <span class="o">=</span> <span class="o">~</span><span class="n">raw_land_mask</span>
+
+        <span class="n">landfall</span> <span class="o">=</span> <span class="n">rasterize_shape_file</span><span class="p">(</span><span class="n">land_mask_shp_f</span><span class="p">,</span>
+                                        <span class="bp">self</span><span class="o">.</span><span class="n">_io_handler</span><span class="o">.</span><span class="n">profile</span><span class="p">,</span>
+                                        <span class="n">reproject_vector</span><span class="o">=</span><span class="n">reproject_vector</span><span class="p">,</span>
+                                        <span class="n">all_touched</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">boundary_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                                        <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;uint8&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_landfall_mask</span> <span class="o">=</span> <span class="n">landfall</span> <span class="o">==</span> <span class="mi">1</span>
+
+        <span class="c1"># XOR landfall and raw land to get all land cells, except landfall</span>
+        <span class="c1"># cells</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dry_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_xor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">landfall_mask</span><span class="p">,</span>
+                                        <span class="n">raw_land_mask</span><span class="p">)</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Created all masks&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">save_tiff</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Saving masks to GeoTIFF&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_save_mask</span><span class="p">(</span><span class="n">raw_land_mask</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">RAW_LAND_MASK_FNAME</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_save_mask</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wet_mask</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">OFFSHORE_MASK_FNAME</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_save_mask</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dry_mask</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">LAND_MASK_FNAME</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_save_mask</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">landfall_mask</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">LANDFALL_MASK_FNAME</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Completed saving all masks&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Masks.load_masks">
+<a class="viewcode-back" href="../../../../_autosummary/reVX.least_cost_xmission.layers.masks.Masks.html#reVX.least_cost_xmission.layers.masks.Masks.load_masks">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">load_masks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load the mask layers from GeoTIFFs. This does not need to be called if</span>
+<span class="sd">        self.create_masks() was run previously. Mask files must be in the</span>
+<span class="sd">        current directory.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Loading masks&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dry_mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_mask</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">LAND_MASK_FNAME</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_wet_mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_mask</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">OFFSHORE_MASK_FNAME</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_landfall_mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_mask</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">LANDFALL_MASK_FNAME</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Successfully loaded wet, dry, and landfall masks&#39;</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_save_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">,</span> <span class="n">fname</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Save mask to GeoTiff</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data</span>
+<span class="sd">            Data to save in GeoTiff</span>
+<span class="sd">        fname</span>
+<span class="sd">            Name of file to save</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">full_fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_masks_dir</span><span class="p">,</span> <span class="n">fname</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_io_handler</span><span class="o">.</span><span class="n">save_data_using_h5_profile</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">full_fname</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_load_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fname</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">bool_</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load mask from GeoTIFF with sanity checking</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        fname</span>
+<span class="sd">            Filename to load mask from</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">            Mask data</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">full_fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_masks_dir</span><span class="p">,</span> <span class="n">fname</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">Path</span><span class="p">(</span><span class="n">full_fname</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Mask file at </span><span class="si">{</span><span class="n">full_fname</span><span class="si">}</span><span class="s1"> not found. &#39;</span>
+                                    <span class="s1">&#39;Please create masks first.&#39;</span><span class="p">)</span>
+
+        <span class="n">raster</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_io_handler</span><span class="o">.</span><span class="n">load_data_using_h5_profile</span><span class="p">(</span><span class="n">full_fname</span><span class="p">,</span>
+                                                             <span class="n">reproject</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">raster</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Maximum value in mask file </span><span class="si">{</span><span class="n">fname</span><span class="si">}</span><span class="s1"> is </span><span class="si">{</span><span class="n">raster</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="si">}</span><span class="s1"> but&#39;</span>
+                   <span class="s1">&#39; should be 1. Mask file appears to be corrupt. Please &#39;</span>
+                   <span class="s1">&#39;recreate it.&#39;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">raster</span><span class="o">.</span><span class="n">min</span><span class="p">()</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Minimum value in mask file </span><span class="si">{</span><span class="n">fname</span><span class="si">}</span><span class="s1"> is </span><span class="si">{</span><span class="n">raster</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="si">}</span><span class="s1"> but&#39;</span>
+                   <span class="s1">&#39; should be 0. Mask file appears to be corrupt. Please &#39;</span>
+                   <span class="s1">&#39;recreate it.&#39;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">raster</span> <span class="o">==</span> <span class="mi">1</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, Alliance for Sustainable Energy, LLC.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

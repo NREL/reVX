@@ -1,0 +1,30 @@
+reVX.least\_cost\_xmission.layers.base.BaseLayerCreator
+=======================================================
+
+.. currentmodule:: reVX.least_cost_xmission.layers.base
+
+.. autoclass:: BaseLayerCreator
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~BaseLayerCreator.build
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~BaseLayerCreator.shape
+   
+   

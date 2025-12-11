@@ -1,0 +1,63 @@
+reVX.config.wind\_dirs.MeanWindDirsConfig
+=========================================
+
+.. currentmodule:: reVX.config.wind_dirs
+
+.. autoclass:: MeanWindDirsConfig
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~MeanWindDirsConfig.check_files
+      ~MeanWindDirsConfig.check_overwrite_keys
+      ~MeanWindDirsConfig.clear
+      ~MeanWindDirsConfig.copy
+      ~MeanWindDirsConfig.fromkeys
+      ~MeanWindDirsConfig.get
+      ~MeanWindDirsConfig.items
+      ~MeanWindDirsConfig.keys
+      ~MeanWindDirsConfig.pop
+      ~MeanWindDirsConfig.popitem
+      ~MeanWindDirsConfig.resolve_path
+      ~MeanWindDirsConfig.set_self_dict
+      ~MeanWindDirsConfig.setdefault
+      ~MeanWindDirsConfig.str_replace_and_resolve
+      ~MeanWindDirsConfig.update
+      ~MeanWindDirsConfig.values
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~MeanWindDirsConfig.NAME
+      ~MeanWindDirsConfig.REQUIREMENTS
+      ~MeanWindDirsConfig.STR_REP
+      ~MeanWindDirsConfig.analysis_years
+      ~MeanWindDirsConfig.area_filter_kernel
+      ~MeanWindDirsConfig.config_dir
+      ~MeanWindDirsConfig.config_keys
+      ~MeanWindDirsConfig.excl_area
+      ~MeanWindDirsConfig.excl_dict
+      ~MeanWindDirsConfig.excl_fpath
+      ~MeanWindDirsConfig.execution_control
+      ~MeanWindDirsConfig.log_directory
+      ~MeanWindDirsConfig.log_level
+      ~MeanWindDirsConfig.min_area
+      ~MeanWindDirsConfig.name
+      ~MeanWindDirsConfig.res_h5_fpath
+      ~MeanWindDirsConfig.resolution
+      ~MeanWindDirsConfig.tm_dset
+      ~MeanWindDirsConfig.wdir_dsets
+   
+   

@@ -1,0 +1,6 @@
+reVX.wind\_dirs.mean\_wind\_dirs\_cli.eagle
+===========================================
+
+.. currentmodule:: reVX.wind_dirs.mean_wind_dirs_cli
+
+.. autofunction:: eagle

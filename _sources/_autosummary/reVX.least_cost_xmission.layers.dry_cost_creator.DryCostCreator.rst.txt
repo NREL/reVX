@@ -1,0 +1,30 @@
+reVX.least\_cost\_xmission.layers.dry\_cost\_creator.DryCostCreator
+===================================================================
+
+.. currentmodule:: reVX.least_cost_xmission.layers.dry_cost_creator
+
+.. autoclass:: DryCostCreator
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~DryCostCreator.build
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~DryCostCreator.shape
+   
+   

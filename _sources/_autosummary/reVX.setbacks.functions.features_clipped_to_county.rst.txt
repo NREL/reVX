@@ -1,0 +1,6 @@
+reVX.setbacks.functions.features\_clipped\_to\_county
+=====================================================
+
+.. currentmodule:: reVX.setbacks.functions
+
+.. autofunction:: features_clipped_to_county

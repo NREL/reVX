@@ -1,0 +1,6 @@
+reVX.plexos.plexos\_plants\_cli.get\_node\_cmd
+==============================================
+
+.. currentmodule:: reVX.plexos.plexos_plants_cli
+
+.. autofunction:: get_node_cmd

@@ -1,0 +1,39 @@
+reVX.least\_cost\_xmission.layers.masks.Masks
+=============================================
+
+.. currentmodule:: reVX.least_cost_xmission.layers.masks
+
+.. autoclass:: Masks
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~Masks.create_masks
+      ~Masks.load_masks
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~Masks.LANDFALL_MASK_FNAME
+      ~Masks.LAND_MASK_FNAME
+      ~Masks.OFFSHORE_MASK_FNAME
+      ~Masks.RAW_LAND_MASK_FNAME
+      ~Masks.dry_mask
+      ~Masks.dry_plus_mask
+      ~Masks.landfall_mask
+      ~Masks.wet_mask
+      ~Masks.wet_plus_mask
+   
+   

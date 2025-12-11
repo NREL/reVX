@@ -1,0 +1,6 @@
+reVX.offshore.assembly\_areas\_cli.eagle
+========================================
+
+.. currentmodule:: reVX.offshore.assembly_areas_cli
+
+.. autofunction:: eagle

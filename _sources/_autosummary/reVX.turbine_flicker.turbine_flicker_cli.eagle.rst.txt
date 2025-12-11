@@ -1,0 +1,6 @@
+reVX.turbine\_flicker.turbine\_flicker\_cli.eagle
+=================================================
+
+.. currentmodule:: reVX.turbine_flicker.turbine_flicker_cli
+
+.. autofunction:: eagle

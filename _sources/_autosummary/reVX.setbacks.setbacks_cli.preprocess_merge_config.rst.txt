@@ -1,0 +1,6 @@
+reVX.setbacks.setbacks\_cli.preprocess\_merge\_config
+=====================================================
+
+.. currentmodule:: reVX.setbacks.setbacks_cli
+
+.. autofunction:: preprocess_merge_config

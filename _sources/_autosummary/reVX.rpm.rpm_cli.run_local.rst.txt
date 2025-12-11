@@ -1,0 +1,6 @@
+reVX.rpm.rpm\_cli.run\_local
+============================
+
+.. currentmodule:: reVX.rpm.rpm_cli
+
+.. autofunction:: run_local

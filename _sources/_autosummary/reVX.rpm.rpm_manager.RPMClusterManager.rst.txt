@@ -1,0 +1,25 @@
+reVX.rpm.rpm\_manager.RPMClusterManager
+=======================================
+
+.. currentmodule:: reVX.rpm.rpm_manager
+
+.. autoclass:: RPMClusterManager
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~RPMClusterManager.run_clusters
+      ~RPMClusterManager.run_clusters_and_profiles
+   
+   
+
+   
+   
+   

@@ -1,0 +1,37 @@
+reVX.setbacks.setbacks
+======================
+
+.. automodule:: reVX.setbacks.setbacks
+
+   
+   
+   .. rubric:: Module attributes
+
+   .. autosummary::
+      :toctree:
+   
+      SETBACK_SPECS
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+   
+      setbacks_calculator
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

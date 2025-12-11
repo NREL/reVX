@@ -1,0 +1,31 @@
+reVX.turbine\_flicker.regulations
+=================================
+
+.. automodule:: reVX.turbine_flicker.regulations
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+   
+      FlickerRegulations
+   
+   
+
+   
+   
+   
+
+
+

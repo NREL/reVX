@@ -1,0 +1,38 @@
+reVX.handlers.sc\_points.Point
+==============================
+
+.. currentmodule:: reVX.handlers.sc_points
+
+.. autoclass:: Point
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~Point.create
+      ~Point.extract_capacity
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~Point.available_capacities
+      ~Point.available_res_gids
+      ~Point.capacity
+      ~Point.cf_means
+      ~Point.gid_counts
+      ~Point.resource_capacity
+      ~Point.resource_gids
+      ~Point.sc_gid
+   
+   

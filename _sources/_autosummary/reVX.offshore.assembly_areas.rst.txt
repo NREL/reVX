@@ -1,0 +1,31 @@
+reVX.offshore.assembly\_areas
+=============================
+
+.. automodule:: reVX.offshore.assembly_areas
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+   
+      AssemblyAreas
+   
+   
+
+   
+   
+   
+
+
+

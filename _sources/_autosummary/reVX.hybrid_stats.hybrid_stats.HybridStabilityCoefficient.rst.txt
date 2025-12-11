@@ -1,0 +1,41 @@
+reVX.hybrid\_stats.hybrid\_stats.HybridStabilityCoefficient
+===========================================================
+
+.. currentmodule:: reVX.hybrid_stats.hybrid_stats
+
+.. autoclass:: HybridStabilityCoefficient
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~HybridStabilityCoefficient.cf_profile
+      ~HybridStabilityCoefficient.compute_stats
+      ~HybridStabilityCoefficient.run
+      ~HybridStabilityCoefficient.save_stats
+      ~HybridStabilityCoefficient.stability_coefficient
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~HybridStabilityCoefficient.STATS
+      ~HybridStabilityCoefficient.lat_lon
+      ~HybridStabilityCoefficient.meta
+      ~HybridStabilityCoefficient.res_cls
+      ~HybridStabilityCoefficient.solar_h5
+      ~HybridStabilityCoefficient.statistics
+      ~HybridStabilityCoefficient.time_index
+      ~HybridStabilityCoefficient.wind_h5
+   
+   

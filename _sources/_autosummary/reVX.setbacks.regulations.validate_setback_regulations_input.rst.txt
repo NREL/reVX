@@ -1,0 +1,6 @@
+reVX.setbacks.regulations.validate\_setback\_regulations\_input
+===============================================================
+
+.. currentmodule:: reVX.setbacks.regulations
+
+.. autofunction:: validate_setback_regulations_input

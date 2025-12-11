@@ -1,0 +1,55 @@
+reVX.offshore.offshore\_inputs.OffshoreInputs
+=============================================
+
+.. currentmodule:: reVX.offshore.offshore_inputs
+
+.. autoclass:: OffshoreInputs
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~OffshoreInputs.close
+      ~OffshoreInputs.compute_assembly_dist
+      ~OffshoreInputs.extract
+      ~OffshoreInputs.extract_array_efficiency
+      ~OffshoreInputs.extract_input_layer
+      ~OffshoreInputs.get_layer_crs
+      ~OffshoreInputs.get_layer_description
+      ~OffshoreInputs.get_layer_profile
+      ~OffshoreInputs.get_layer_values
+      ~OffshoreInputs.get_nodata_value
+      ~OffshoreInputs.get_offshore_inputs
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~OffshoreInputs.DEFAULT_INPUT_LAYERS
+      ~OffshoreInputs.chunks
+      ~OffshoreInputs.column_ids
+      ~OffshoreInputs.crs
+      ~OffshoreInputs.h5
+      ~OffshoreInputs.iarr
+      ~OffshoreInputs.inputs_fpath
+      ~OffshoreInputs.lat_lons
+      ~OffshoreInputs.latitude
+      ~OffshoreInputs.layers
+      ~OffshoreInputs.longitude
+      ~OffshoreInputs.meta
+      ~OffshoreInputs.pixel_area
+      ~OffshoreInputs.profile
+      ~OffshoreInputs.row_ids
+      ~OffshoreInputs.shape
+   
+   

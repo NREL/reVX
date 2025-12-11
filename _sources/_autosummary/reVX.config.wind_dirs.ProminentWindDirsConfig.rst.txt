@@ -1,0 +1,60 @@
+reVX.config.wind\_dirs.ProminentWindDirsConfig
+==============================================
+
+.. currentmodule:: reVX.config.wind_dirs
+
+.. autoclass:: ProminentWindDirsConfig
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ProminentWindDirsConfig.check_files
+      ~ProminentWindDirsConfig.check_overwrite_keys
+      ~ProminentWindDirsConfig.clear
+      ~ProminentWindDirsConfig.copy
+      ~ProminentWindDirsConfig.fromkeys
+      ~ProminentWindDirsConfig.get
+      ~ProminentWindDirsConfig.items
+      ~ProminentWindDirsConfig.keys
+      ~ProminentWindDirsConfig.pop
+      ~ProminentWindDirsConfig.popitem
+      ~ProminentWindDirsConfig.resolve_path
+      ~ProminentWindDirsConfig.set_self_dict
+      ~ProminentWindDirsConfig.setdefault
+      ~ProminentWindDirsConfig.str_replace_and_resolve
+      ~ProminentWindDirsConfig.update
+      ~ProminentWindDirsConfig.values
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~ProminentWindDirsConfig.NAME
+      ~ProminentWindDirsConfig.REQUIREMENTS
+      ~ProminentWindDirsConfig.STR_REP
+      ~ProminentWindDirsConfig.agg_dset
+      ~ProminentWindDirsConfig.analysis_years
+      ~ProminentWindDirsConfig.config_dir
+      ~ProminentWindDirsConfig.config_keys
+      ~ProminentWindDirsConfig.excl_area
+      ~ProminentWindDirsConfig.excl_fpath
+      ~ProminentWindDirsConfig.execution_control
+      ~ProminentWindDirsConfig.log_directory
+      ~ProminentWindDirsConfig.log_level
+      ~ProminentWindDirsConfig.name
+      ~ProminentWindDirsConfig.powerrose_h5_fpath
+      ~ProminentWindDirsConfig.resolution
+      ~ProminentWindDirsConfig.tm_dset
+   
+   

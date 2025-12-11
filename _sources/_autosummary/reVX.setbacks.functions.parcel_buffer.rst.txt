@@ -1,0 +1,6 @@
+reVX.setbacks.functions.parcel\_buffer
+======================================
+
+.. currentmodule:: reVX.setbacks.functions
+
+.. autofunction:: parcel_buffer

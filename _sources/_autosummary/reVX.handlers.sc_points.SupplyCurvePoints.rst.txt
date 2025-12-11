@@ -1,0 +1,35 @@
+reVX.handlers.sc\_points.SupplyCurvePoints
+==========================================
+
+.. currentmodule:: reVX.handlers.sc_points
+
+.. autoclass:: SupplyCurvePoints
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~SupplyCurvePoints.check_sc_gid
+      ~SupplyCurvePoints.get_capacity
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~SupplyCurvePoints.capacity
+      ~SupplyCurvePoints.mask
+      ~SupplyCurvePoints.sc_gids
+      ~SupplyCurvePoints.sc_points
+      ~SupplyCurvePoints.sc_table
+   
+   

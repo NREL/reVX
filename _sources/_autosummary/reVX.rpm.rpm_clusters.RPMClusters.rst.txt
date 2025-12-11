@@ -1,0 +1,37 @@
+reVX.rpm.rpm\_clusters.RPMClusters
+==================================
+
+.. currentmodule:: reVX.rpm.rpm_clusters
+
+.. autoclass:: RPMClusters
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~RPMClusters.cluster
+      ~RPMClusters.generate_shapefile
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~RPMClusters.cluster_coefficients
+      ~RPMClusters.cluster_coordinates
+      ~RPMClusters.cluster_ids
+      ~RPMClusters.coefficients
+      ~RPMClusters.coordinates
+      ~RPMClusters.meta
+      ~RPMClusters.n_clusters
+   
+   

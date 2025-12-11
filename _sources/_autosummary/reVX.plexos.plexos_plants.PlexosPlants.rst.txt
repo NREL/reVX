@@ -1,0 +1,37 @@
+reVX.plexos.plexos\_plants.PlexosPlants
+=======================================
+
+.. currentmodule:: reVX.plexos.plexos_plants
+
+.. autoclass:: PlexosPlants
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~PlexosPlants.dump
+      ~PlexosPlants.load
+      ~PlexosPlants.save
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~PlexosPlants.plant_builds
+      ~PlexosPlants.plant_capacity
+      ~PlexosPlants.plant_ids
+      ~PlexosPlants.plant_table
+      ~PlexosPlants.plants
+      ~PlexosPlants.sc_points
+   
+   

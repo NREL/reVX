@@ -1,0 +1,54 @@
+reVX.config.rpm.ClusterConfigGroup
+==================================
+
+.. currentmodule:: reVX.config.rpm
+
+.. autoclass:: ClusterConfigGroup
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ClusterConfigGroup.check_files
+      ~ClusterConfigGroup.check_overwrite_keys
+      ~ClusterConfigGroup.clear
+      ~ClusterConfigGroup.copy
+      ~ClusterConfigGroup.fromkeys
+      ~ClusterConfigGroup.get
+      ~ClusterConfigGroup.items
+      ~ClusterConfigGroup.keys
+      ~ClusterConfigGroup.pop
+      ~ClusterConfigGroup.popitem
+      ~ClusterConfigGroup.resolve_path
+      ~ClusterConfigGroup.set_self_dict
+      ~ClusterConfigGroup.setdefault
+      ~ClusterConfigGroup.str_replace_and_resolve
+      ~ClusterConfigGroup.update
+      ~ClusterConfigGroup.values
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~ClusterConfigGroup.REQUIREMENTS
+      ~ClusterConfigGroup.STR_REP
+      ~ClusterConfigGroup.config_dir
+      ~ClusterConfigGroup.config_keys
+      ~ClusterConfigGroup.contiguous_filter
+      ~ClusterConfigGroup.dist_rank_filter
+      ~ClusterConfigGroup.log_level
+      ~ClusterConfigGroup.name
+      ~ClusterConfigGroup.region_col
+      ~ClusterConfigGroup.rpm_meta
+   
+   

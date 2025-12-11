@@ -1,0 +1,25 @@
+reVX.hybrid\_stats.temporal\_agg.DatasetAgg
+===========================================
+
+.. currentmodule:: reVX.hybrid_stats.temporal_agg
+
+.. autoclass:: DatasetAgg
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~DatasetAgg.aggregate
+      ~DatasetAgg.run
+   
+   
+
+   
+   
+   

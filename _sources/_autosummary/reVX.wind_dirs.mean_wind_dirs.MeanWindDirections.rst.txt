@@ -1,0 +1,35 @@
+reVX.wind\_dirs.mean\_wind\_dirs.MeanWindDirections
+===================================================
+
+.. currentmodule:: reVX.wind_dirs.mean_wind_dirs
+
+.. autoclass:: MeanWindDirections
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~MeanWindDirections.aggregate
+      ~MeanWindDirections.run
+      ~MeanWindDirections.run_parallel
+      ~MeanWindDirections.run_serial
+      ~MeanWindDirections.save_agg_to_h5
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~MeanWindDirections.gids
+      ~MeanWindDirections.shape
+   
+   

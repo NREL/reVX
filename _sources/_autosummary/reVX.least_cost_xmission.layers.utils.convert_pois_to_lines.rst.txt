@@ -1,0 +1,6 @@
+reVX.least\_cost\_xmission.layers.utils.convert\_pois\_to\_lines
+================================================================
+
+.. currentmodule:: reVX.least_cost_xmission.layers.utils
+
+.. autofunction:: convert_pois_to_lines

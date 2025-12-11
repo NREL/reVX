@@ -1,0 +1,42 @@
+reVX.turbine\_flicker.turbine\_flicker.TurbineFlicker
+=====================================================
+
+.. currentmodule:: reVX.turbine_flicker.turbine_flicker
+
+.. autoclass:: TurbineFlicker
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~TurbineFlicker.compute_all_local_exclusions
+      ~TurbineFlicker.compute_exclusions
+      ~TurbineFlicker.compute_generic_exclusions
+      ~TurbineFlicker.compute_local_exclusions
+      ~TurbineFlicker.parse_features
+      ~TurbineFlicker.pre_process_regulations
+      ~TurbineFlicker.run
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~TurbineFlicker.DEFAULT_FEATURE_OUTFILE
+      ~TurbineFlicker.STEPS_PER_HOUR
+      ~TurbineFlicker.description
+      ~TurbineFlicker.exclusion_merge_func
+      ~TurbineFlicker.no_exclusions_array
+      ~TurbineFlicker.profile
+      ~TurbineFlicker.regulations_table
+   
+   

@@ -1,0 +1,45 @@
+reVX.handlers.layered\_h5.LayeredTransmissionH5
+===============================================
+
+.. currentmodule:: reVX.handlers.layered_h5
+
+.. autoclass:: LayeredTransmissionH5
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~LayeredTransmissionH5.create_new
+      ~LayeredTransmissionH5.extract_all_layers
+      ~LayeredTransmissionH5.extract_layers
+      ~LayeredTransmissionH5.layer_to_geotiff
+      ~LayeredTransmissionH5.layers_to_h5
+      ~LayeredTransmissionH5.load_data_using_h5_profile
+      ~LayeredTransmissionH5.reproject
+      ~LayeredTransmissionH5.save_data_using_h5_profile
+      ~LayeredTransmissionH5.write_geotiff_to_h5
+      ~LayeredTransmissionH5.write_layer_to_h5
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~LayeredTransmissionH5.LATITUDE
+      ~LayeredTransmissionH5.LONGITUDE
+      ~LayeredTransmissionH5.SUPPORTED_FILE_ENDINGS
+      ~LayeredTransmissionH5.layers
+      ~LayeredTransmissionH5.profile
+      ~LayeredTransmissionH5.shape
+      ~LayeredTransmissionH5.template_file
+   
+   

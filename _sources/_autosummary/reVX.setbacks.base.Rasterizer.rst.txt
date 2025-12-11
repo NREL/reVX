@@ -1,0 +1,33 @@
+reVX.setbacks.base.Rasterizer
+=============================
+
+.. currentmodule:: reVX.setbacks.base
+
+.. autoclass:: Rasterizer
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~Rasterizer.rasterize
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~Rasterizer.arr_shape
+      ~Rasterizer.inclusions
+      ~Rasterizer.profile
+      ~Rasterizer.transform
+   
+   

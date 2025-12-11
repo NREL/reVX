@@ -1,0 +1,58 @@
+reVX.config.offshore.OffshoreInputsConfig
+=========================================
+
+.. currentmodule:: reVX.config.offshore
+
+.. autoclass:: OffshoreInputsConfig
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~OffshoreInputsConfig.check_files
+      ~OffshoreInputsConfig.check_overwrite_keys
+      ~OffshoreInputsConfig.clear
+      ~OffshoreInputsConfig.copy
+      ~OffshoreInputsConfig.fromkeys
+      ~OffshoreInputsConfig.get
+      ~OffshoreInputsConfig.items
+      ~OffshoreInputsConfig.keys
+      ~OffshoreInputsConfig.pop
+      ~OffshoreInputsConfig.popitem
+      ~OffshoreInputsConfig.resolve_path
+      ~OffshoreInputsConfig.set_self_dict
+      ~OffshoreInputsConfig.setdefault
+      ~OffshoreInputsConfig.str_replace_and_resolve
+      ~OffshoreInputsConfig.update
+      ~OffshoreInputsConfig.values
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~OffshoreInputsConfig.NAME
+      ~OffshoreInputsConfig.REQUIREMENTS
+      ~OffshoreInputsConfig.STR_REP
+      ~OffshoreInputsConfig.analysis_years
+      ~OffshoreInputsConfig.config_dir
+      ~OffshoreInputsConfig.config_keys
+      ~OffshoreInputsConfig.execution_control
+      ~OffshoreInputsConfig.input_layers
+      ~OffshoreInputsConfig.inputs_fpath
+      ~OffshoreInputsConfig.log_directory
+      ~OffshoreInputsConfig.log_level
+      ~OffshoreInputsConfig.name
+      ~OffshoreInputsConfig.offshore_sites
+      ~OffshoreInputsConfig.tm_dset
+   
+   

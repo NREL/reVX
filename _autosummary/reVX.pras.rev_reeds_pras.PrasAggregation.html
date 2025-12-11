@@ -1,0 +1,1343 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>reVX.pras.rev_reeds_pras.PrasAggregation &mdash; reVX 0.5.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=e1a677a5"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="reVX.red_e" href="reVX.red_e.html" />
+    <link rel="prev" title="reVX.pras.rev_reeds_pras" href="reVX.pras.rev_reeds_pras.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            reVX
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Home page</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc/installation_usage.html">Installation and Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../misc/installation.html">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../misc/installation.html#recommended-citation">Recommended Citation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../misc/installation.html#command-line-tools">Command Line Tools</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../misc/examples.html">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../misc/examples.rpm.html">Resource Planning Model (RPM)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.rpm.html#rev-rpm-cli">reV-RPM CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.rpm.html#rpm-sub-package">RPM sub-package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../misc/examples.setbacks.html">reVX Setbacks</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.setbacks.html#computing-setbacks-for-conus">Computing setbacks for CONUS</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../misc/examples.setbacks.html#ordinance-database">Ordinance database</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../misc/examples.setbacks.html#config-file-setup">Config file setup</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../misc/examples.setbacks.html#execution">Execution</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../misc/examples.setbacks.html#merging">Merging</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.setbacks.html#advanced-topics">Advanced Topics</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../misc/examples.setbacks.html#partial-setbacks">Partial Setbacks</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../misc/examples.setbacks.html#writing-directly-to-hdf5-files">Writing directly to HDF5 files</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../misc/examples.setbacks.html#feature-specific-generic-multipliers">Feature-specific generic multipliers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../misc/examples.setbacks.html#custom-setbacks-computations">Custom setbacks computations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../misc/examples.setbacks.html#batched-execution">Batched execution</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../misc/examples.setbacks.html#job-status">Job Status</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../misc/examples.transmission.html">reVX LCP</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.transmission.html#h5-layer-file-creation">H5 Layer File Creation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.transmission.html#masks">Masks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.transmission.html#layer-creation-configuration-file">Layer Creation Configuration File</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../misc/examples.transmission.html#required-keys">Required Keys</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../misc/examples.transmission.html#optional-keys">Optional Keys</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../misc/examples.transmission.html#action-keys">Action Keys</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.transmission.html#layer-creation-config-file-examples">Layer Creation Config File Examples</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.transmission.html#running-the-layer-creator">Running the Layer Creator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.transmission.html#conus-onshore-example">CONUS (Onshore) Example</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../misc/examples.transmission.html#costs">Costs</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.transmission.html#reinforced-transmission">Reinforced Transmission</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../misc/examples.transmission.html#key-assumptions-under-this-approach">Key assumptions under this approach:</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.transmission.html#substation-connections-only-old">Substation connections only (OLD)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.transmission.html#substation-and-tie-line-connections-new">Substation and tie-line connections (New)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.transmission.html#offshore-least-cost-paths">Offshore Least Cost Paths</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../misc/examples.transmission.html#nomenclature-note">Nomenclature Note</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../misc/examples.transmission.html#offshore-workflow">Offshore Workflow</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../misc/examples.transmission.html#offshore-examples">Offshore Examples</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="reVX.html">API reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="reVX.cli.html">reVX.cli</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reVX.config.html">reVX.config</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="reVX.config.least_cost_xmission.html">reVX.config.least_cost_xmission</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.least_cost_xmission.LeastCostPathsConfig.html">reVX.config.least_cost_xmission.LeastCostPathsConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.least_cost_xmission.LeastCostXmissionConfig.html">reVX.config.least_cost_xmission.LeastCostXmissionConfig</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.config.offshore.html">reVX.config.offshore</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.offshore.AssemblyAreasConfig.html">reVX.config.offshore.AssemblyAreasConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.offshore.DistToPortsConfig.html">reVX.config.offshore.DistToPortsConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.offshore.OffshoreInputsConfig.html">reVX.config.offshore.OffshoreInputsConfig</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.config.reeds.html">reVX.config.reeds</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.reeds.ClassifyConfigGroup.html">reVX.config.reeds.ClassifyConfigGroup</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.reeds.ProfilesConfigGroup.html">reVX.config.reeds.ProfilesConfigGroup</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.reeds.ReedsConfig.html">reVX.config.reeds.ReedsConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.reeds.TimeslicesConfigGroup.html">reVX.config.reeds.TimeslicesConfigGroup</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.config.rpm.html">reVX.config.rpm</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.rpm.ClusterConfigGroup.html">reVX.config.rpm.ClusterConfigGroup</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.rpm.RPMConfig.html">reVX.config.rpm.RPMConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.rpm.RepProfilesConfigGroup.html">reVX.config.rpm.RepProfilesConfigGroup</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.config.transmission_layer_creation.html">reVX.config.transmission_layer_creation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.transmission_layer_creation.LayerBuildComponents.html">reVX.config.transmission_layer_creation.LayerBuildComponents</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.transmission_layer_creation.Layers.html">reVX.config.transmission_layer_creation.Layers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.transmission_layer_creation.DryCosts.html">reVX.config.transmission_layer_creation.DryCosts</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.transmission_layer_creation.LayerBuildConfig.html">reVX.config.transmission_layer_creation.LayerBuildConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.transmission_layer_creation.LayerConfig.html">reVX.config.transmission_layer_creation.LayerConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.transmission_layer_creation.MergeFrictionBarriers.html">reVX.config.transmission_layer_creation.MergeFrictionBarriers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.transmission_layer_creation.RangeConfig.html">reVX.config.transmission_layer_creation.RangeConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.transmission_layer_creation.Rasterize.html">reVX.config.transmission_layer_creation.Rasterize</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.transmission_layer_creation.TransmissionLayerCreationConfig.html">reVX.config.transmission_layer_creation.TransmissionLayerCreationConfig</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.config.turbine_flicker.html">reVX.config.turbine_flicker</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.turbine_flicker.TurbineFlickerConfig.html">reVX.config.turbine_flicker.TurbineFlickerConfig</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.config.wind_dirs.html">reVX.config.wind_dirs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.wind_dirs.MeanWindDirsConfig.html">reVX.config.wind_dirs.MeanWindDirsConfig</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.wind_dirs.ProminentWindDirsConfig.html">reVX.config.wind_dirs.ProminentWindDirsConfig</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="reVX.handlers.html">reVX.handlers</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="reVX.handlers.database.html">reVX.handlers.database</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.handlers.database.Database.html">reVX.handlers.database.Database</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.handlers.geopackage.html">reVX.handlers.geopackage</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.handlers.geopackage.GPKGMeta.html">reVX.handlers.geopackage.GPKGMeta</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.handlers.geotiff.html">reVX.handlers.geotiff</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.handlers.geotiff.Geotiff.html">reVX.handlers.geotiff.Geotiff</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.handlers.layered_h5.html">reVX.handlers.layered_h5</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.handlers.layered_h5.check_geotiff.html">reVX.handlers.layered_h5.check_geotiff</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.handlers.layered_h5.crs_match.html">reVX.handlers.layered_h5.crs_match</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.handlers.layered_h5.LayeredH5.html">reVX.handlers.layered_h5.LayeredH5</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.handlers.layered_h5.LayeredTransmissionH5.html">reVX.handlers.layered_h5.LayeredTransmissionH5</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.handlers.outputs.html">reVX.handlers.outputs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.handlers.outputs.Outputs.html">reVX.handlers.outputs.Outputs</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.handlers.sc_points.html">reVX.handlers.sc_points</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.handlers.sc_points.Point.html">reVX.handlers.sc_points.Point</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.handlers.sc_points.SupplyCurvePoints.html">reVX.handlers.sc_points.SupplyCurvePoints</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="reVX.hybrid_stats.html">reVX.hybrid_stats</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="reVX.hybrid_stats.hybrid_stats.html">reVX.hybrid_stats.hybrid_stats</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.hybrid_stats.hybrid_stats.kendall_tau.html">reVX.hybrid_stats.hybrid_stats.kendall_tau</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.hybrid_stats.hybrid_stats.pearson_correlation.html">reVX.hybrid_stats.hybrid_stats.pearson_correlation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.hybrid_stats.hybrid_stats.spearman_correlation.html">reVX.hybrid_stats.hybrid_stats.spearman_correlation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.hybrid_stats.hybrid_stats.HybridCrossCorrelation.html">reVX.hybrid_stats.hybrid_stats.HybridCrossCorrelation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.hybrid_stats.hybrid_stats.HybridStabilityCoefficient.html">reVX.hybrid_stats.hybrid_stats.HybridStabilityCoefficient</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.hybrid_stats.hybrid_stats.HybridStats.html">reVX.hybrid_stats.hybrid_stats.HybridStats</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.hybrid_stats.temporal_agg.html">reVX.hybrid_stats.temporal_agg</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.hybrid_stats.temporal_agg.get_time_index.html">reVX.hybrid_stats.temporal_agg.get_time_index</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.hybrid_stats.temporal_agg.DatasetAgg.html">reVX.hybrid_stats.temporal_agg.DatasetAgg</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.hybrid_stats.temporal_agg.TemporalAgg.html">reVX.hybrid_stats.temporal_agg.TemporalAgg</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="reVX.least_cost_xmission.html">reVX.least_cost_xmission</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="reVX.least_cost_xmission.config.html">reVX.least_cost_xmission.config</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.least_cost_xmission.config.constants.html">reVX.least_cost_xmission.config.constants</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.least_cost_xmission.config.xmission_config.html">reVX.least_cost_xmission.config.xmission_config</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.least_cost_xmission.layers.html">reVX.least_cost_xmission.layers</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.least_cost_xmission.layers.base.html">reVX.least_cost_xmission.layers.base</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.least_cost_xmission.layers.dry_cost_creator.html">reVX.least_cost_xmission.layers.dry_cost_creator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.least_cost_xmission.layers.layer_creator.html">reVX.least_cost_xmission.layers.layer_creator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.least_cost_xmission.layers.masks.html">reVX.least_cost_xmission.layers.masks</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.least_cost_xmission.layers.utils.html">reVX.least_cost_xmission.layers.utils</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.least_cost_xmission.least_cost_paths.html">reVX.least_cost_xmission.least_cost_paths</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.least_cost_xmission.least_cost_paths.min_reinforcement_costs.html">reVX.least_cost_xmission.least_cost_paths.min_reinforcement_costs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.least_cost_xmission.least_cost_paths.LeastCostPaths.html">reVX.least_cost_xmission.least_cost_paths.LeastCostPaths</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.least_cost_xmission.least_cost_paths.ReinforcementPaths.html">reVX.least_cost_xmission.least_cost_paths.ReinforcementPaths</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.least_cost_xmission.least_cost_paths_cli.html">reVX.least_cost_xmission.least_cost_paths_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.least_cost_xmission.least_cost_paths_cli.eagle.html">reVX.least_cost_xmission.least_cost_paths_cli.eagle</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.least_cost_xmission.least_cost_paths_cli.get_node_cmd.html">reVX.least_cost_xmission.least_cost_paths_cli.get_node_cmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.least_cost_xmission.least_cost_paths_cli.run_local.html">reVX.least_cost_xmission.least_cost_paths_cli.run_local</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.least_cost_xmission.least_cost_xmission.html">reVX.least_cost_xmission.least_cost_xmission</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.least_cost_xmission.least_cost_xmission.region_mapper.html">reVX.least_cost_xmission.least_cost_xmission.region_mapper</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.least_cost_xmission.least_cost_xmission.LeastCostXmission.html">reVX.least_cost_xmission.least_cost_xmission.LeastCostXmission</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.least_cost_xmission.least_cost_xmission.RegionalXmission.html">reVX.least_cost_xmission.least_cost_xmission.RegionalXmission</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.least_cost_xmission.least_cost_xmission_cli.html">reVX.least_cost_xmission.least_cost_xmission_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.least_cost_xmission.least_cost_xmission_cli.eagle.html">reVX.least_cost_xmission.least_cost_xmission_cli.eagle</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.least_cost_xmission.least_cost_xmission_cli.get_node_cmd.html">reVX.least_cost_xmission.least_cost_xmission_cli.get_node_cmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.least_cost_xmission.least_cost_xmission_cli.run_local.html">reVX.least_cost_xmission.least_cost_xmission_cli.run_local</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.least_cost_xmission.trans_cap_costs.html">reVX.least_cost_xmission.trans_cap_costs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.least_cost_xmission.trans_cap_costs.RegionalTransCapCosts.html">reVX.least_cost_xmission.trans_cap_costs.RegionalTransCapCosts</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.least_cost_xmission.trans_cap_costs.ReinforcementLineCosts.html">reVX.least_cost_xmission.trans_cap_costs.ReinforcementLineCosts</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.least_cost_xmission.trans_cap_costs.TieLineCosts.html">reVX.least_cost_xmission.trans_cap_costs.TieLineCosts</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.least_cost_xmission.trans_cap_costs.TransCapCosts.html">reVX.least_cost_xmission.trans_cap_costs.TransCapCosts</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.least_cost_xmission.transmission_layer_creator_cli.html">reVX.least_cost_xmission.transmission_layer_creator_cli</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="reVX.offshore.html">reVX.offshore</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="reVX.offshore.assembly_areas.html">reVX.offshore.assembly_areas</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.offshore.assembly_areas.AssemblyAreas.html">reVX.offshore.assembly_areas.AssemblyAreas</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.offshore.assembly_areas_cli.html">reVX.offshore.assembly_areas_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.offshore.assembly_areas_cli.eagle.html">reVX.offshore.assembly_areas_cli.eagle</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.offshore.assembly_areas_cli.get_node_cmd.html">reVX.offshore.assembly_areas_cli.get_node_cmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.offshore.assembly_areas_cli.run_local.html">reVX.offshore.assembly_areas_cli.run_local</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.offshore.dist_to_ports.html">reVX.offshore.dist_to_ports</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.offshore.dist_to_ports.DistanceToPorts.html">reVX.offshore.dist_to_ports.DistanceToPorts</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.offshore.dist_to_ports_cli.html">reVX.offshore.dist_to_ports_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.offshore.dist_to_ports_cli.eagle.html">reVX.offshore.dist_to_ports_cli.eagle</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.offshore.dist_to_ports_cli.get_node_cmd.html">reVX.offshore.dist_to_ports_cli.get_node_cmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.offshore.dist_to_ports_cli.run_local.html">reVX.offshore.dist_to_ports_cli.run_local</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.offshore.dist_to_ports_converter.html">reVX.offshore.dist_to_ports_converter</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.offshore.dist_to_ports_converter.DistToPortsConverter.html">reVX.offshore.dist_to_ports_converter.DistToPortsConverter</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.offshore.offshore_inputs.html">reVX.offshore.offshore_inputs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.offshore.offshore_inputs.OffshoreInputs.html">reVX.offshore.offshore_inputs.OffshoreInputs</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.offshore.offshore_inputs_cli.html">reVX.offshore.offshore_inputs_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.offshore.offshore_inputs_cli.eagle.html">reVX.offshore.offshore_inputs_cli.eagle</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.offshore.offshore_inputs_cli.get_node_cmd.html">reVX.offshore.offshore_inputs_cli.get_node_cmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.offshore.offshore_inputs_cli.run_local.html">reVX.offshore.offshore_inputs_cli.run_local</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="reVX.plexos.html">reVX.plexos</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="reVX.plexos.base.html">reVX.plexos.base</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.plexos.base.BaseProfileAggregation.html">reVX.plexos.base.BaseProfileAggregation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.plexos.base.PlexosNode.html">reVX.plexos.base.PlexosNode</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.plexos.dpv_plexos.html">reVX.plexos.dpv_plexos</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.plexos.dpv_plexos.DpvPlexosAggregation.html">reVX.plexos.dpv_plexos.DpvPlexosAggregation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.plexos.dpv_plexos.DpvResource.html">reVX.plexos.dpv_plexos.DpvResource</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.plexos.plexos_plants.html">reVX.plexos.plexos_plants</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.plexos.plexos_plants.PlantProfileAggregation.html">reVX.plexos.plexos_plants.PlantProfileAggregation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.plexos.plexos_plants.Plants.html">reVX.plexos.plexos_plants.Plants</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.plexos.plexos_plants.PlexosPlants.html">reVX.plexos.plexos_plants.PlexosPlants</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.plexos.plexos_plants_cli.html">reVX.plexos.plexos_plants_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.plexos.plexos_plants_cli.get_node_cmd.html">reVX.plexos.plexos_plants_cli.get_node_cmd</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.plexos.rev_reeds_plexos.html">reVX.plexos.rev_reeds_plexos</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.plexos.rev_reeds_plexos.PlexosAggregation.html">reVX.plexos.rev_reeds_plexos.PlexosAggregation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.plexos.rev_reeds_plexos.RevReedsPlexosManager.html">reVX.plexos.rev_reeds_plexos.RevReedsPlexosManager</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.plexos.rev_reeds_plexos_cli.html">reVX.plexos.rev_reeds_plexos_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.plexos.rev_reeds_plexos_cli.get_node_cmd.html">reVX.plexos.rev_reeds_plexos_cli.get_node_cmd</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.plexos.simple_plant_builder.html">reVX.plexos.simple_plant_builder</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.plexos.simple_plant_builder.SimplePlantBuilder.html">reVX.plexos.simple_plant_builder.SimplePlantBuilder</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.plexos.simple_plant_builder_cli.html">reVX.plexos.simple_plant_builder_cli</a></li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.plexos.utilities.html">reVX.plexos.utilities</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.plexos.utilities.get_coord_labels.html">reVX.plexos.utilities.get_coord_labels</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.plexos.utilities.parse_table_name.html">reVX.plexos.utilities.parse_table_name</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.plexos.utilities.DataCleaner.html">reVX.plexos.utilities.DataCleaner</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.plexos.utilities.ProjectGidHandler.html">reVX.plexos.utilities.ProjectGidHandler</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2 current"><a class="reference internal" href="reVX.pras.html">reVX.pras</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="reVX.pras.rev_reeds_pras.html">reVX.pras.rev_reeds_pras</a><ul class="current">
+<li class="toctree-l4 current"><a class="current reference internal" href="#">reVX.pras.rev_reeds_pras.PrasAggregation</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="reVX.red_e.html">reVX.red_e</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="reVX.red_e.tech_potential.html">reVX.red_e.tech_potential</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.red_e.tech_potential.TechPotential.html">reVX.red_e.tech_potential.TechPotential</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="reVX.rpm.html">reVX.rpm</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="reVX.rpm.rpm_cli.html">reVX.rpm.rpm_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.rpm.rpm_cli.eagle.html">reVX.rpm.rpm_cli.eagle</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.rpm.rpm_cli.get_node_cmd.html">reVX.rpm.rpm_cli.get_node_cmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.rpm.rpm_cli.run_local.html">reVX.rpm.rpm_cli.run_local</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.rpm.rpm_clusters.html">reVX.rpm.rpm_clusters</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.rpm.rpm_clusters.RPMClusters.html">reVX.rpm.rpm_clusters.RPMClusters</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.rpm.rpm_clusters.RPMWavelets.html">reVX.rpm.rpm_clusters.RPMWavelets</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.rpm.rpm_manager.html">reVX.rpm.rpm_manager</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.rpm.rpm_manager.RPMClusterManager.html">reVX.rpm.rpm_manager.RPMClusterManager</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.rpm.rpm_output.html">reVX.rpm.rpm_output</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.rpm.rpm_output.RPMOutput.html">reVX.rpm.rpm_output.RPMOutput</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.rpm.rpm_output.RepresentativeProfiles.html">reVX.rpm.rpm_output.RepresentativeProfiles</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="reVX.setbacks.html">reVX.setbacks</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="reVX.setbacks.base.html">reVX.setbacks.base</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.setbacks.base.BUFFERS.html">reVX.setbacks.base.BUFFERS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.setbacks.base.FEATURE_FILTERS.html">reVX.setbacks.base.FEATURE_FILTERS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.setbacks.base.AbstractBaseSetbacks.html">reVX.setbacks.base.AbstractBaseSetbacks</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.setbacks.base.Rasterizer.html">reVX.setbacks.base.Rasterizer</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.setbacks.functions.html">reVX.setbacks.functions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.setbacks.functions.features_clipped_to_county.html">reVX.setbacks.functions.features_clipped_to_county</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.setbacks.functions.features_with_centroid_in_county.html">reVX.setbacks.functions.features_with_centroid_in_county</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.setbacks.functions.parcel_buffer.html">reVX.setbacks.functions.parcel_buffer</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.setbacks.functions.positive_buffer.html">reVX.setbacks.functions.positive_buffer</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.setbacks.regulations.html">reVX.setbacks.regulations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.setbacks.regulations.select_setback_regulations.html">reVX.setbacks.regulations.select_setback_regulations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.setbacks.regulations.validate_setback_regulations_input.html">reVX.setbacks.regulations.validate_setback_regulations_input</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.setbacks.regulations.SetbackRegulations.html">reVX.setbacks.regulations.SetbackRegulations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.setbacks.regulations.WindSetbackRegulations.html">reVX.setbacks.regulations.WindSetbackRegulations</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.setbacks.setbacks.html">reVX.setbacks.setbacks</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.setbacks.setbacks.SETBACK_SPECS.html">reVX.setbacks.setbacks.SETBACK_SPECS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.setbacks.setbacks.setbacks_calculator.html">reVX.setbacks.setbacks.setbacks_calculator</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.setbacks.setbacks_cli.html">reVX.setbacks.setbacks_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.setbacks.setbacks_cli.compute_setbacks.html">reVX.setbacks.setbacks_cli.compute_setbacks</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.setbacks.setbacks_cli.merge_setbacks.html">reVX.setbacks.setbacks_cli.merge_setbacks</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.setbacks.setbacks_cli.preprocess_merge_config.html">reVX.setbacks.setbacks_cli.preprocess_merge_config</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.setbacks.setbacks_cli.preprocess_setbacks_config.html">reVX.setbacks.setbacks_cli.preprocess_setbacks_config</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.setbacks.setbacks_converter.html">reVX.setbacks.setbacks_converter</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.setbacks.setbacks_converter.parse_setbacks.html">reVX.setbacks.setbacks_converter.parse_setbacks</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.setbacks.setbacks_converter.SetbacksConverter.html">reVX.setbacks.setbacks_converter.SetbacksConverter</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="reVX.turbine_flicker.html">reVX.turbine_flicker</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="reVX.turbine_flicker.regulations.html">reVX.turbine_flicker.regulations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.turbine_flicker.regulations.FlickerRegulations.html">reVX.turbine_flicker.regulations.FlickerRegulations</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.turbine_flicker.turbine_flicker.html">reVX.turbine_flicker.turbine_flicker</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.turbine_flicker.turbine_flicker.compute_flicker_exclusions.html">reVX.turbine_flicker.turbine_flicker.compute_flicker_exclusions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.turbine_flicker.turbine_flicker.TurbineFlicker.html">reVX.turbine_flicker.turbine_flicker.TurbineFlicker</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.turbine_flicker.turbine_flicker_cli.html">reVX.turbine_flicker.turbine_flicker_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.turbine_flicker.turbine_flicker_cli.eagle.html">reVX.turbine_flicker.turbine_flicker_cli.eagle</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.turbine_flicker.turbine_flicker_cli.flicker_fn_out.html">reVX.turbine_flicker.turbine_flicker_cli.flicker_fn_out</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.turbine_flicker.turbine_flicker_cli.get_node_cmd.html">reVX.turbine_flicker.turbine_flicker_cli.get_node_cmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.turbine_flicker.turbine_flicker_cli.run_local.html">reVX.turbine_flicker.turbine_flicker_cli.run_local</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="reVX.utilities.html">reVX.utilities</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="reVX.utilities.cluster_methods.html">reVX.utilities.cluster_methods</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.cluster_methods.ClusteringMethods.html">reVX.utilities.cluster_methods.ClusteringMethods</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.utilities.exceptions.html">reVX.utilities.exceptions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.exceptions.GeoTiffKeyError.html">reVX.utilities.exceptions.GeoTiffKeyError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.exceptions.InvalidMCPStartValueError.html">reVX.utilities.exceptions.InvalidMCPStartValueError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.exceptions.LeastCostPathNotFoundError.html">reVX.utilities.exceptions.LeastCostPathNotFoundError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.exceptions.ProfileCheckError.html">reVX.utilities.exceptions.ProfileCheckError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.exceptions.RPMRuntimeError.html">reVX.utilities.exceptions.RPMRuntimeError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.exceptions.RPMTypeError.html">reVX.utilities.exceptions.RPMTypeError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.exceptions.RPMValueError.html">reVX.utilities.exceptions.RPMValueError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.exceptions.ReedsKeyError.html">reVX.utilities.exceptions.ReedsKeyError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.exceptions.ReedsRuntimeError.html">reVX.utilities.exceptions.ReedsRuntimeError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.exceptions.ReedsValueError.html">reVX.utilities.exceptions.ReedsValueError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.exceptions.SupplyCurvePointCapacityError.html">reVX.utilities.exceptions.SupplyCurvePointCapacityError</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.exceptions.reVXError.html">reVX.utilities.exceptions.reVXError</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.utilities.exclusions.html">reVX.utilities.exclusions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.exclusions.AbstractBaseExclusionsMerger.html">reVX.utilities.exclusions.AbstractBaseExclusionsMerger</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.exclusions.AbstractExclusionCalculatorInterface.html">reVX.utilities.exclusions.AbstractExclusionCalculatorInterface</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.utilities.fix_sc_lat_lons.html">reVX.utilities.fix_sc_lat_lons</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.fix_sc_lat_lons.fix_sc_lat_lon.html">reVX.utilities.fix_sc_lat_lons.fix_sc_lat_lon</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.utilities.forecasts.html">reVX.utilities.forecasts</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.forecasts.FcstUtils.html">reVX.utilities.forecasts.FcstUtils</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.utilities.output_extractor.html">reVX.utilities.output_extractor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.utilities.rasterize.html">reVX.utilities.rasterize</a></li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.utilities.reeds_cols.html">reVX.utilities.reeds_cols</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.reeds_cols.add_county_info.html">reVX.utilities.reeds_cols.add_county_info</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.reeds_cols.add_extra_data.html">reVX.utilities.reeds_cols.add_extra_data</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.reeds_cols.add_nrel_regions.html">reVX.utilities.reeds_cols.add_nrel_regions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.reeds_cols.add_reeds_columns.html">reVX.utilities.reeds_cols.add_reeds_columns</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.utilities.region_classifier.html">reVX.utilities.region_classifier</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.region_classifier.RegionClassifier.html">reVX.utilities.region_classifier.RegionClassifier</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.utilities.regulations.html">reVX.utilities.regulations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.regulations.AbstractBaseRegulations.html">reVX.utilities.regulations.AbstractBaseRegulations</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.utilities.utilities.html">reVX.utilities.utilities</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.utilities.centered_pixels.html">reVX.utilities.utilities.centered_pixels</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.utilities.coordinate_distance.html">reVX.utilities.utilities.coordinate_distance</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.utilities.load_fips_to_state_map.html">reVX.utilities.utilities.load_fips_to_state_map</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.utilities.log_versions.html">reVX.utilities.utilities.log_versions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.utilities.rev_sc_to_geotiff_arr.html">reVX.utilities.utilities.rev_sc_to_geotiff_arr</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.utilities.to_geo.html">reVX.utilities.utilities.to_geo</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.utilities.transform_pixels_to_lat_lon.html">reVX.utilities.utilities.transform_pixels_to_lat_lon</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="reVX.version.html">reVX.version</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reVX.wind_dirs.html">reVX.wind_dirs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="reVX.wind_dirs.mean_wind_dirs.html">reVX.wind_dirs.mean_wind_dirs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.wind_dirs.mean_wind_dirs.MeanWindDirections.html">reVX.wind_dirs.mean_wind_dirs.MeanWindDirections</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.wind_dirs.mean_wind_dirs_cli.html">reVX.wind_dirs.mean_wind_dirs_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.wind_dirs.mean_wind_dirs_cli.eagle.html">reVX.wind_dirs.mean_wind_dirs_cli.eagle</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.wind_dirs.mean_wind_dirs_cli.get_node_cmd.html">reVX.wind_dirs.mean_wind_dirs_cli.get_node_cmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.wind_dirs.mean_wind_dirs_cli.run_local.html">reVX.wind_dirs.mean_wind_dirs_cli.run_local</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.wind_dirs.mean_wind_dirs_point.html">reVX.wind_dirs.mean_wind_dirs_point</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint.html">reVX.wind_dirs.mean_wind_dirs_point.MeanWindDirectionsPoint</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.wind_dirs.prominent_wind_dirs.html">reVX.wind_dirs.prominent_wind_dirs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.wind_dirs.prominent_wind_dirs.ProminentWindDirections.html">reVX.wind_dirs.prominent_wind_dirs.ProminentWindDirections</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.wind_dirs.prominent_wind_dirs_cli.html">reVX.wind_dirs.prominent_wind_dirs_cli</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.wind_dirs.prominent_wind_dirs_cli.eagle.html">reVX.wind_dirs.prominent_wind_dirs_cli.eagle</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.wind_dirs.prominent_wind_dirs_cli.get_node_cmd.html">reVX.wind_dirs.prominent_wind_dirs_cli.get_node_cmd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reVX.wind_dirs.prominent_wind_dirs_cli.run_local.html">reVX.wind_dirs.prominent_wind_dirs_cli.run_local</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../_cli/cli.html">CLI reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../_cli/least-cost-paths.html">least-cost-paths</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/least-cost-paths.html#least-cost-paths-add-rr-to-nn">add-rr-to-nn</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/least-cost-paths.html#least-cost-paths-from-config">from-config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/least-cost-paths.html#least-cost-paths-local">local</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/least-cost-paths.html#least-cost-paths-map-ss-to-rr">map-ss-to-rr</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/least-cost-paths.html#least-cost-paths-ss-from-conn">ss-from-conn</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/least-cost-paths.html#least-cost-paths-valid-config-keys">valid-config-keys</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../_cli/least-cost-xmission.html">least-cost-xmission</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/least-cost-xmission.html#least-cost-xmission-from-config">from-config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/least-cost-xmission.html#least-cost-xmission-local">local</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/least-cost-xmission.html#least-cost-xmission-merge-output">merge-output</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/least-cost-xmission.html#least-cost-xmission-merge-reinforcement-costs">merge-reinforcement-costs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/least-cost-xmission.html#least-cost-xmission-valid-config-keys">valid-config-keys</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../_cli/mean-wind-dirs.html">mean-wind-dirs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/mean-wind-dirs.html#mean-wind-dirs-from-config">from-config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/mean-wind-dirs.html#mean-wind-dirs-local">local</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/mean-wind-dirs.html#mean-wind-dirs-valid-config-keys">valid-config-keys</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../_cli/offshore-assembly-areas.html">offshore-assembly-areas</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/offshore-assembly-areas.html#offshore-assembly-areas-from-config">from-config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/offshore-assembly-areas.html#offshore-assembly-areas-local">local</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/offshore-assembly-areas.html#offshore-assembly-areas-valid-config-keys">valid-config-keys</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../_cli/offshore-dist-to-ports.html">offshore-dist-to-ports</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/offshore-dist-to-ports.html#offshore-dist-to-ports-from-config">from-config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/offshore-dist-to-ports.html#offshore-dist-to-ports-local">local</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/offshore-dist-to-ports.html#offshore-dist-to-ports-valid-config-keys">valid-config-keys</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../_cli/offshore-inputs.html">offshore-inputs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/offshore-inputs.html#offshore-inputs-from-config">from-config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/offshore-inputs.html#offshore-inputs-local">local</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/offshore-inputs.html#offshore-inputs-valid-config-keys">valid-config-keys</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../_cli/plexos-plants.html">plexos-plants</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/plexos-plants.html#plexos-plants-eagle">eagle</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../_cli/prominent-wind-dirs.html">prominent-wind-dirs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/prominent-wind-dirs.html#prominent-wind-dirs-from-config">from-config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/prominent-wind-dirs.html#prominent-wind-dirs-local">local</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/prominent-wind-dirs.html#prominent-wind-dirs-valid-config-keys">valid-config-keys</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../_cli/reV-plexos.html">reV-plexos</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/reV-plexos.html#rev-plexos-eagle">eagle</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../_cli/reV-rpm.html">reV-rpm</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/reV-rpm.html#rev-rpm-from-config">from-config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/reV-rpm.html#rev-rpm-local">local</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_cli/reV-rpm.html#rev-rpm-local-cluster">cluster</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_cli/reV-rpm.html#rev-rpm-local-rep-profiles">rep-profiles</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/reV-rpm.html#rev-rpm-valid-config-keys">valid-config-keys</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../_cli/reVX.html">reVX</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/reVX.html#revx-add-reeds-cols">add-reeds-cols</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/reVX.html#revx-correct-forecast">correct-forecast</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/reVX.html#revx-exclusions">exclusions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../_cli/reVX.html#revx-exclusions-layers-from-h5">layers-from-h5</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_cli/reVX.html#revx-exclusions-layers-to-h5">layers-to-h5</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../_cli/reVX.html#revx-exclusions-mask">mask</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/reVX.html#revx-extract-output-year">extract-output-year</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/reVX.html#revx-fix-rev-sc-lat-lon">fix-rev-sc-lat-lon</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/reVX.html#revx-region-classifier">region-classifier</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/reVX.html#revx-rev-sc-to-gpkg">rev-sc-to-gpkg</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/reVX.html#revx-rev-sc-to-tiff">rev-sc-to-tiff</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../_cli/setbacks.html">setbacks</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/setbacks.html#setbacks-batch">batch</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/setbacks.html#setbacks-compute">compute</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/setbacks.html#setbacks-merge">merge</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/setbacks.html#setbacks-pipeline">pipeline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/setbacks.html#setbacks-reset-status">reset-status</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/setbacks.html#setbacks-script">script</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/setbacks.html#setbacks-status">status</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/setbacks.html#setbacks-template-configs">template-configs</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../_cli/simple-plant-builder.html">simple-plant-builder</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../_cli/transmission-layer-creator.html">transmission-layer-creator</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/transmission-layer-creator.html#transmission-layer-creator-convert-pois">convert-pois</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/transmission-layer-creator.html#transmission-layer-creator-create-h5">create-h5</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/transmission-layer-creator.html#transmission-layer-creator-create-masks">create-masks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/transmission-layer-creator.html#transmission-layer-creator-from-config">from-config</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../_cli/turbine-flicker.html">turbine-flicker</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/turbine-flicker.html#turbine-flicker-from-config">from-config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/turbine-flicker.html#turbine-flicker-local">local</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../_cli/turbine-flicker.html#turbine-flicker-valid-config-keys">valid-config-keys</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">reVX</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="reVX.html">reVX</a></li>
+          <li class="breadcrumb-item"><a href="reVX.pras.html">reVX.pras</a></li>
+          <li class="breadcrumb-item"><a href="reVX.pras.rev_reeds_pras.html">reVX.pras.rev_reeds_pras</a></li>
+      <li class="breadcrumb-item active">reVX.pras.rev_reeds_pras.PrasAggregation</li>
+      <li class="wy-breadcrumbs-aside">
+              <a href="https://github.com/nlr/reVX/blob/main/docs/source/_autosummary/reVX.pras.rev_reeds_pras.PrasAggregation.rst" class="fa fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="revx-pras-rev-reeds-pras-prasaggregation">
+<h1>reVX.pras.rev_reeds_pras.PrasAggregation<a class="headerlink" href="#revx-pras-rev-reeds-pras-prasaggregation" title="Link to this heading"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="reVX.pras.rev_reeds_pras.PrasAggregation">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">PrasAggregation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rev_sc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reeds_build</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cf_fpath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pras_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">forecast_fpath</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">build_year</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2050</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">res_class</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tech_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timezone</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'US/Central'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dset_tag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_workers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/pras/rev_reeds_pras.html#PrasAggregation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#reVX.pras.rev_reeds_pras.PrasAggregation" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="reVX.plexos.rev_reeds_plexos.PlexosAggregation.html#reVX.plexos.rev_reeds_plexos.PlexosAggregation" title="reVX.plexos.rev_reeds_plexos.PlexosAggregation"><code class="xref py py-class docutils literal notranslate"><span class="pre">PlexosAggregation</span></code></a></p>
+<p>Framework to aggregate reV gen profiles to PRAS zone power profiles and
+overwrite exisiting pras file with new generation profiles. This class
+takes as input rev supply curve table, and reeds buildout table (specifying
+which rev sc points were built and at what capacity). The class will build
+power profiles for each supply curve point and then aggregate the sc point
+profiles to the nearest neighbor pras zone. The corresponding zone power
+profiles in the pras output file will be overwritten with these new
+aggregated generation profiles.</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">reVX.pras.rev_reeds_pras</span><span class="w"> </span><span class="kn">import</span> <span class="n">PrasAggregation</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">rev_supply_curve_file</span> <span class="o">=</span> <span class="o">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">reeds_build_file</span> <span class="o">=</span> <span class="o">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">capacity_factor_file</span> <span class="o">=</span> <span class="o">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pras_file</span> <span class="o">=</span> <span class="o">...</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">PrasAggregation</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">rev_supply_curve_file</span><span class="p">,</span> <span class="n">reeds_build_file</span><span class="p">,</span>
+<span class="go">                        capacity_factor_file, pras_file, build_year=2047,</span>
+<span class="go">                        tech_type=&#39;upv&#39;)</span>
+</pre></div>
+</div>
+<p>This will replace all the pras generation profiles with upv tech in the
+file pras_file.pras.h5 with aggregated generation profiles from cf_path.h5</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">reeds_build_files</span> <span class="o">=</span> <span class="p">[</span><span class="o">...</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">capacity_factor_files</span> <span class="o">=</span> <span class="p">[</span><span class="o">...</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">tech_types</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;upv&#39;</span><span class="p">,</span> <span class="s1">&#39;dupv&#39;</span><span class="p">,</span> <span class="s1">&#39;wind-ons&#39;</span><span class="p">,</span> <span class="s1">&#39;wind-ofs&#39;</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">PrasAggregation</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">rev_supply_curve_file</span><span class="p">,</span> <span class="n">reeds_build_files</span><span class="p">,</span>
+<span class="go">                        capacity_factor_files, pras_file, build_year=2047,</span>
+<span class="go">                        tech_type=tech_types)</span>
+</pre></div>
+</div>
+<p>This will run the same routine but for each tech type in tech_types. The
+files in reeds_build_files and capacity_factor_files have to correspond to
+the tech type in the tech_types list.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rev_sc</strong> (<em>str | pd.DataFrame</em>) – reV supply curve results table including SC gid, latitude,
+longitude, res_gids, gid_counts. Or file path to reV supply
+curve table.</p></li>
+<li><p><strong>reeds_build</strong> (<em>str | pd.DataFrame</em>) – ReEDS buildout with rows for built capacity (MW) at each reV SC
+point. This should have columns: year, region, class,
+built_capacity, and sc_gid (corresponding to the reV supply curve
+point gid). Some cleaning of the column names will be performed for
+legacy tables but these are the column headers that are desired.</p></li>
+<li><p><strong>cf_fpath</strong> (<em>str</em>) – File path to .h5 capacity factor file (reV gen output) to get
+profiles from.</p></li>
+<li><p><strong>pras_file</strong> (<em>str</em>) – File path to existing hdf5 PRAS file (.pras or .h5 extension) which
+will be amended to include generation data from given resource
+data. This file must have a ‘generators’ group with ‘_core’ and
+‘capacity’ datasets in this group.</p></li>
+<li><p><strong>forecast_fpath</strong> (<em>str | None</em>) – Forecasted capacity factor .h5 file path (reV results). If not
+None, the supply curve res_gids are mapped to sites in the
+cf_fpath, then the coordinates from cf_fpath are mapped to the
+nearest neighbor sites in the forecast_fpath, where the final
+generation profiles are retrieved from.</p></li>
+<li><p><strong>build_year</strong> (<em>int, optional</em>) – REEDS year of interest, by default 2050</p></li>
+<li><p><strong>res_class</strong> (<em>int | None</em>) – Optional resource class to use to filter supply curve points.
+For example, if res_class = 3 then only supply curve points with
+class 3 will be kept in the sc_build table. The corresponds to the
+‘class’ column in the reeds_build file.</p></li>
+<li><p><strong>tech_type</strong> (<em>str | None</em>) – Pras files will have the tech type in the
+[‘generation/_core’][‘name’] entry, which is used to select the
+correct output index</p></li>
+<li><p><strong>timezone</strong> (<em>str</em>) – Timezone for output generation profiles. This is a string that will
+be passed to pytz.timezone() e.g. US/Pacific, US/Mountain,
+US/Central, US/Eastern, or UTC. For a list of all available
+timezones, see pytz.all_timezones</p></li>
+<li><p><strong>dset_tag</strong> (<em>str</em>) – Dataset tag to append to dataset names in cf profile file. e.g. If
+the cf profile file is a multi year file using dset_tag=”-2008”
+will enable us to select the corresponding datasets
+(cf_mean-2008, cf_profile-2008, etc)</p></li>
+<li><p><strong>max_workers</strong> (<em>int | None</em>) – Max workers for parallel profile aggregation. None uses all
+available workers. 1 will run in serial.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Methods</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#reVX.pras.rev_reeds_pras.PrasAggregation.convert_bespoke_sc" title="reVX.pras.rev_reeds_pras.PrasAggregation.convert_bespoke_sc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">convert_bespoke_sc</span></code></a>(df, gid_column)</p></td>
+<td><p>Convert a bespoke supply curve table to reference resource gids (res_gids) based on the bespoke generation outputs that are on the supply curve grid not the resource grid</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#reVX.pras.rev_reeds_pras.PrasAggregation.enforce_tech_constraint" title="reVX.pras.rev_reeds_pras.PrasAggregation.enforce_tech_constraint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">enforce_tech_constraint</span></code></a>(meta)</p></td>
+<td><p>Filter the pras generator meta for the requested technology type and class</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#reVX.pras.rev_reeds_pras.PrasAggregation.export" title="reVX.pras.rev_reeds_pras.PrasAggregation.export"><code class="xref py py-obj docutils literal notranslate"><span class="pre">export</span></code></a>(time_index, profiles)</p></td>
+<td><p>Export generation profiles to h5 and plexos-formatted csv</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#reVX.pras.rev_reeds_pras.PrasAggregation.get_missing_zones" title="reVX.pras.rev_reeds_pras.PrasAggregation.get_missing_zones"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_missing_zones</span></code></a>()</p></td>
+<td><p>Check for zones present in the pras output file which cannot be found in the supply curve zone list</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#reVX.pras.rev_reeds_pras.PrasAggregation.get_pras_classes" title="reVX.pras.rev_reeds_pras.PrasAggregation.get_pras_classes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_pras_classes</span></code></a>(pras_file, tech_type)</p></td>
+<td><p>Get list of tech classes present in the pras file for the requested technology type</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#reVX.pras.rev_reeds_pras.PrasAggregation.get_pras_meta" title="reVX.pras.rev_reeds_pras.PrasAggregation.get_pras_meta"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_pras_meta</span></code></a>(pras_file)</p></td>
+<td><p>Get pras 'meta' which describes the tech type and class at each zone For upv and dupv regions are labeled p1, p2, etc.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#reVX.pras.rev_reeds_pras.PrasAggregation.get_unique_plant_names" title="reVX.pras.rev_reeds_pras.PrasAggregation.get_unique_plant_names"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_unique_plant_names</span></code></a>(table, name_col[, ...])</p></td>
+<td><p>Get a list of ordered unique plant names</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#reVX.pras.rev_reeds_pras.PrasAggregation.make_profiles" title="reVX.pras.rev_reeds_pras.PrasAggregation.make_profiles"><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_profiles</span></code></a>()</p></td>
+<td><p>Make a 2D array of aggregated plexos gen profiles.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#reVX.pras.rev_reeds_pras.PrasAggregation.qa" title="reVX.pras.rev_reeds_pras.PrasAggregation.qa"><code class="xref py py-obj docutils literal notranslate"><span class="pre">qa</span></code></a>(profiles)</p></td>
+<td><p>Simple QA to check original mean/min/max capacity and the mean/min/max capacity for the updated generation profiles</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#reVX.pras.rev_reeds_pras.PrasAggregation.run" title="reVX.pras.rev_reeds_pras.PrasAggregation.run"><code class="xref py py-obj docutils literal notranslate"><span class="pre">run</span></code></a>(rev_sc, reeds_build, cf_fpath, pras_file)</p></td>
+<td><p>Run pras aggregation and output for the requested tech types.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#reVX.pras.rev_reeds_pras.PrasAggregation.tz_convert_profiles" title="reVX.pras.rev_reeds_pras.PrasAggregation.tz_convert_profiles"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tz_convert_profiles</span></code></a>(profiles, timezone)</p></td>
+<td><p>Convert profiles to local time and forward/back fill missing data.</p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Attributes</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#reVX.pras.rev_reeds_pras.PrasAggregation.available_res_gids" title="reVX.pras.rev_reeds_pras.PrasAggregation.available_res_gids"><code class="xref py py-obj docutils literal notranslate"><span class="pre">available_res_gids</span></code></a></p></td>
+<td><p>Resource gids available in the cf file.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#reVX.pras.rev_reeds_pras.PrasAggregation.built_capacity" title="reVX.pras.rev_reeds_pras.PrasAggregation.built_capacity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">built_capacity</span></code></a></p></td>
+<td><p>Get the built capacity for all zones found in the pras output file and the reeds build file.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#reVX.pras.rev_reeds_pras.PrasAggregation.complete_pras_meta" title="reVX.pras.rev_reeds_pras.PrasAggregation.complete_pras_meta"><code class="xref py py-obj docutils literal notranslate"><span class="pre">complete_pras_meta</span></code></a></p></td>
+<td><p>Get pras 'meta' without filtering for tech_type and class</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#reVX.pras.rev_reeds_pras.PrasAggregation.forecast_map" title="reVX.pras.rev_reeds_pras.PrasAggregation.forecast_map"><code class="xref py py-obj docutils literal notranslate"><span class="pre">forecast_map</span></code></a></p></td>
+<td><p>An array mapping the reV &quot;actuals&quot; generation data to forecast data of a different resolution (if input).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#reVX.pras.rev_reeds_pras.PrasAggregation.found_build_zones" title="reVX.pras.rev_reeds_pras.PrasAggregation.found_build_zones"><code class="xref py py-obj docutils literal notranslate"><span class="pre">found_build_zones</span></code></a></p></td>
+<td><p>List of sc build zones found in the pras output file for the requested tech and class</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#reVX.pras.rev_reeds_pras.PrasAggregation.found_pras_zones" title="reVX.pras.rev_reeds_pras.PrasAggregation.found_pras_zones"><code class="xref py py-obj docutils literal notranslate"><span class="pre">found_pras_zones</span></code></a></p></td>
+<td><p>List of pras zones found in the reeds build out for the requested tech and class</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#reVX.pras.rev_reeds_pras.PrasAggregation.n_plexos_nodes" title="reVX.pras.rev_reeds_pras.PrasAggregation.n_plexos_nodes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">n_plexos_nodes</span></code></a></p></td>
+<td><p>Get the number of unique plexos nodes in this buildout.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#reVX.pras.rev_reeds_pras.PrasAggregation.node_map" title="reVX.pras.rev_reeds_pras.PrasAggregation.node_map"><code class="xref py py-obj docutils literal notranslate"><span class="pre">node_map</span></code></a></p></td>
+<td><p>Nearest neighbor output mapping rev supply curve points to plants or plexos nodes.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#reVX.pras.rev_reeds_pras.PrasAggregation.plexos_meta" title="reVX.pras.rev_reeds_pras.PrasAggregation.plexos_meta"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plexos_meta</span></code></a></p></td>
+<td><p>Get plexos node meta data for the nodes included in this problem.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#reVX.pras.rev_reeds_pras.PrasAggregation.pras_indices" title="reVX.pras.rev_reeds_pras.PrasAggregation.pras_indices"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pras_indices</span></code></a></p></td>
+<td><p>Get the list of pras file indices for the pras zones available in the supply curve zone list.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#reVX.pras.rev_reeds_pras.PrasAggregation.pras_meta" title="reVX.pras.rev_reeds_pras.PrasAggregation.pras_meta"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pras_meta</span></code></a></p></td>
+<td><p>Get pras 'meta' which describes the tech type and class at each zone</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#reVX.pras.rev_reeds_pras.PrasAggregation.pras_names" title="reVX.pras.rev_reeds_pras.PrasAggregation.pras_names"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pras_names</span></code></a></p></td>
+<td><p>Get the list of pras entry names for the pras zones available in the supply curve zone list.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#reVX.pras.rev_reeds_pras.PrasAggregation.pras_zones" title="reVX.pras.rev_reeds_pras.PrasAggregation.pras_zones"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pras_zones</span></code></a></p></td>
+<td><p>Get list of all available zones in pras output file for the requested tech and class.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#reVX.pras.rev_reeds_pras.PrasAggregation.sc_build" title="reVX.pras.rev_reeds_pras.PrasAggregation.sc_build"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sc_build</span></code></a></p></td>
+<td><p>Get the reV supply curve table reduced to just those points built by reeds including a built_capacity column in MW.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#reVX.pras.rev_reeds_pras.PrasAggregation.sc_build_indices" title="reVX.pras.rev_reeds_pras.PrasAggregation.sc_build_indices"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sc_build_indices</span></code></a></p></td>
+<td><p>Get the list of profile indices corresponding to the sc_build_zones - used to write the new profiles to the pras output.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#reVX.pras.rev_reeds_pras.PrasAggregation.sc_build_zones" title="reVX.pras.rev_reeds_pras.PrasAggregation.sc_build_zones"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sc_build_zones</span></code></a></p></td>
+<td><p>Get the labels for the zones in the zone_map.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#reVX.pras.rev_reeds_pras.PrasAggregation.sc_res_gids" title="reVX.pras.rev_reeds_pras.PrasAggregation.sc_res_gids"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sc_res_gids</span></code></a></p></td>
+<td><p>List of unique resource GIDS in the REEDS build out.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#reVX.pras.rev_reeds_pras.PrasAggregation.time_index" title="reVX.pras.rev_reeds_pras.PrasAggregation.time_index"><code class="xref py py-obj docutils literal notranslate"><span class="pre">time_index</span></code></a></p></td>
+<td><p>Get the generation profile time index.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#reVX.pras.rev_reeds_pras.PrasAggregation.tz_alias" title="reVX.pras.rev_reeds_pras.PrasAggregation.tz_alias"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tz_alias</span></code></a></p></td>
+<td><p>Get a short 3-char tz alias if the timezone is common in the US (pst, mst, cst, est)</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#reVX.pras.rev_reeds_pras.PrasAggregation.zone_index_map" title="reVX.pras.rev_reeds_pras.PrasAggregation.zone_index_map"><code class="xref py py-obj docutils literal notranslate"><span class="pre">zone_index_map</span></code></a></p></td>
+<td><p>Get the map between zone index and zone label.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py method">
+<dt class="sig sig-object py" id="reVX.pras.rev_reeds_pras.PrasAggregation.get_pras_meta">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_pras_meta</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pras_file</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/pras/rev_reeds_pras.html#PrasAggregation.get_pras_meta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#reVX.pras.rev_reeds_pras.PrasAggregation.get_pras_meta" title="Link to this definition"></a></dt>
+<dd><p>Get pras ‘meta’ which describes the tech type and class at each zone
+For upv and dupv regions are labeled p1, p2, etc. For wind and csp
+regions are labeled s1, s2, etc.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>pras_file</strong> (<em>str</em>) – Path to the pras file being overwritten with new generation
+profiles</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>pd.DataFrame</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="reVX.pras.rev_reeds_pras.PrasAggregation.get_pras_classes">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_pras_classes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pras_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tech_type</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/pras/rev_reeds_pras.html#PrasAggregation.get_pras_classes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#reVX.pras.rev_reeds_pras.PrasAggregation.get_pras_classes" title="Link to this definition"></a></dt>
+<dd><p>Get list of tech classes present in the pras file for the requested
+technology type</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pras_file</strong> (<em>str</em>) – Path to the pras file being overwritten with new generation
+profiles</p></li>
+<li><p><strong>tech_type</strong> (<em>str</em>) – Technology type for which profiles are being overwritten</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>List</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="reVX.pras.rev_reeds_pras.PrasAggregation.zone_index_map">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">zone_index_map</span></span><a class="headerlink" href="#reVX.pras.rev_reeds_pras.PrasAggregation.zone_index_map" title="Link to this definition"></a></dt>
+<dd><p>Get the map between zone index and zone label. i.e. zone_index=1,
+zone_label=p10</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="reVX.pras.rev_reeds_pras.PrasAggregation.sc_build_zones">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">sc_build_zones</span></span><a class="headerlink" href="#reVX.pras.rev_reeds_pras.PrasAggregation.sc_build_zones" title="Link to this definition"></a></dt>
+<dd><p>Get the labels for the zones in the zone_map. For example, the zone_map
+might have an index of 1 for the region but this corresponds to the
+label of p10.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="reVX.pras.rev_reeds_pras.PrasAggregation.complete_pras_meta">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">complete_pras_meta</span></span><a class="headerlink" href="#reVX.pras.rev_reeds_pras.PrasAggregation.complete_pras_meta" title="Link to this definition"></a></dt>
+<dd><p>Get pras ‘meta’ without filtering for tech_type and class</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>pd.DataFrame</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="reVX.pras.rev_reeds_pras.PrasAggregation.pras_meta">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">pras_meta</span></span><a class="headerlink" href="#reVX.pras.rev_reeds_pras.PrasAggregation.pras_meta" title="Link to this definition"></a></dt>
+<dd><p>Get pras ‘meta’ which describes the tech type and class at each zone</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>pd.DataFrame</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="reVX.pras.rev_reeds_pras.PrasAggregation.pras_zones">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">pras_zones</span></span><a class="headerlink" href="#reVX.pras.rev_reeds_pras.PrasAggregation.pras_zones" title="Link to this definition"></a></dt>
+<dd><p>Get list of all available zones in pras output file for the requested
+tech and class. For upv and dupv regions are labeled p1, p2, etc. For
+wind and csp regions are labeled s1, s2, etc.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>List</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="reVX.pras.rev_reeds_pras.PrasAggregation.pras_indices">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">pras_indices</span></span><a class="headerlink" href="#reVX.pras.rev_reeds_pras.PrasAggregation.pras_indices" title="Link to this definition"></a></dt>
+<dd><p>Get the list of pras file indices for the pras zones available in the
+supply curve zone list.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>np.ndarray</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="reVX.pras.rev_reeds_pras.PrasAggregation.pras_names">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">pras_names</span></span><a class="headerlink" href="#reVX.pras.rev_reeds_pras.PrasAggregation.pras_names" title="Link to this definition"></a></dt>
+<dd><p>Get the list of pras entry names for the pras zones available in the
+supply curve zone list.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>np.ndarray</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="reVX.pras.rev_reeds_pras.PrasAggregation.found_pras_zones">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">found_pras_zones</span></span><a class="headerlink" href="#reVX.pras.rev_reeds_pras.PrasAggregation.found_pras_zones" title="Link to this definition"></a></dt>
+<dd><p>List of pras zones found in the reeds build out for the requested tech
+and class</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>np.ndarray</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="reVX.pras.rev_reeds_pras.PrasAggregation.found_build_zones">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">found_build_zones</span></span><a class="headerlink" href="#reVX.pras.rev_reeds_pras.PrasAggregation.found_build_zones" title="Link to this definition"></a></dt>
+<dd><p>List of sc build zones found in the pras output file for the requested
+tech and class</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>np.ndarray</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="reVX.pras.rev_reeds_pras.PrasAggregation.sc_build_indices">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">sc_build_indices</span></span><a class="headerlink" href="#reVX.pras.rev_reeds_pras.PrasAggregation.sc_build_indices" title="Link to this definition"></a></dt>
+<dd><p>Get the list of profile indices corresponding to the sc_build_zones -
+used to write the new profiles to the pras output.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>List</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="reVX.pras.rev_reeds_pras.PrasAggregation.built_capacity">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">built_capacity</span></span><a class="headerlink" href="#reVX.pras.rev_reeds_pras.PrasAggregation.built_capacity" title="Link to this definition"></a></dt>
+<dd><p>Get the built capacity for all zones found in the pras output file and
+the reeds build file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>np.ndarray</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="reVX.pras.rev_reeds_pras.PrasAggregation.enforce_tech_constraint">
+<span class="sig-name descname"><span class="pre">enforce_tech_constraint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">meta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/pras/rev_reeds_pras.html#PrasAggregation.enforce_tech_constraint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#reVX.pras.rev_reeds_pras.PrasAggregation.enforce_tech_constraint" title="Link to this definition"></a></dt>
+<dd><p>Filter the pras generator meta for the requested technology type and
+class</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>meta</strong> (<em>pd.DataFrame</em>) – Full pras ‘meta’ without tech_type or class filtering</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>pd.DataFrame</em> – pras meta DataFrame filtered by tech_type and class</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="reVX.pras.rev_reeds_pras.PrasAggregation.get_missing_zones">
+<span class="sig-name descname"><span class="pre">get_missing_zones</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/pras/rev_reeds_pras.html#PrasAggregation.get_missing_zones"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#reVX.pras.rev_reeds_pras.PrasAggregation.get_missing_zones" title="Link to this definition"></a></dt>
+<dd><p>Check for zones present in the pras output file which cannot be found
+in the supply curve zone list</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="reVX.pras.rev_reeds_pras.PrasAggregation.qa">
+<span class="sig-name descname"><span class="pre">qa</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">profiles</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/pras/rev_reeds_pras.html#PrasAggregation.qa"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#reVX.pras.rev_reeds_pras.PrasAggregation.qa" title="Link to this definition"></a></dt>
+<dd><p>Simple QA to check original mean/min/max capacity and the mean/min/max
+capacity for the updated generation profiles</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>profiles</strong> (<em>np.ndarray</em>) – Generation profile timeseries in MW at each plant / pras zone.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>new_cap</strong> (<em>np.ndarray</em>) – Array containing the updated generation profiles</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="reVX.pras.rev_reeds_pras.PrasAggregation.export">
+<span class="sig-name descname"><span class="pre">export</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">time_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">profiles</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/pras/rev_reeds_pras.html#PrasAggregation.export"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#reVX.pras.rev_reeds_pras.PrasAggregation.export" title="Link to this definition"></a></dt>
+<dd><p>Export generation profiles to h5 and plexos-formatted csv</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>time_index</strong> (<em>pd.datetimeindex</em>) – Time index for the profiles.</p></li>
+<li><p><strong>profiles</strong> (<em>np.ndarray</em>) – Generation profile timeseries in MW at each plant / pras zone.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="reVX.pras.rev_reeds_pras.PrasAggregation.run">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rev_sc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reeds_build</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cf_fpath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pras_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">forecast_fpath</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">build_year</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2050</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">res_class</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tech_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timezone</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'US/Central'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dset_tag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_workers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/pras/rev_reeds_pras.html#PrasAggregation.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#reVX.pras.rev_reeds_pras.PrasAggregation.run" title="Link to this definition"></a></dt>
+<dd><p>Run pras aggregation and output for the requested tech types. This
+will aggregate the generation profiles over region specific supply
+curve points found in rev_sc, after filtering rev_sc for the requested
+tech type, and resource class. These aggregated generation profiles
+will then be written to the pras output file in the location
+corresponding to the region, tech type, and class.</p>
+<dl class="simple">
+<dt>rev_sc<span class="classifier">str | pd.DataFrame</span></dt><dd><p>reV supply curve results table including SC gid, latitude,
+longitude, res_gids, gid_counts. Or file path to reV supply
+curve table. If providing a list of tech types this also needs to
+be a list of the corresponding supply curve files.</p>
+</dd>
+<dt>reeds_build<span class="classifier">str | pd.DataFrame | list</span></dt><dd><p>ReEDS buildout with rows for built capacity (MW) at each reV SC
+point. This should have columns: reeds_year, built_capacity, and
+sc_gid (corresponding to the reV supply curve point gid). Some
+cleaning of the column names will be performed for legacy tables
+but these are the column headers that are desired. This input can
+also include “plexos_node_gid” which will explicitly assign a
+supply curve point buildout to a single pras zone. If included,
+all points must be assigned to pras zones. If providing a list
+of tech types this also needs to be a list of the corresponding
+reeds builout files for each tech type.</p>
+</dd>
+<dt>cf_fpath<span class="classifier">str | list</span></dt><dd><p>File path to capacity factor file (reV gen output) to
+get profiles from. If providing a list of tech types this also
+needs to be a list of the corresponding capacity factor files.</p>
+</dd>
+<dt>pras_file<span class="classifier">str</span></dt><dd><p>File path to existing PRAS file which will be amended to include
+generation data from given resource data.</p>
+</dd>
+<dt>forecast_fpath<span class="classifier">str | None</span></dt><dd><p>Forecasted capacity factor .h5 file path (reV results). If not
+None, the supply curve res_gids are mapped to sites in the
+cf_fpath, then the coordinates from cf_fpath are mapped to the
+nearest neighbor sites in the forecast_fpath, where the final
+generation profiles are retrieved from.</p>
+</dd>
+<dt>build_year<span class="classifier">int, optional</span></dt><dd><p>REEDS year of interest, by default 2050</p>
+</dd>
+<dt>res_class<span class="classifier">int | None</span></dt><dd><p>Optional resource class to use to filter supply curve points.
+For example, if res_class = 3 then only supply curve points with
+class 3 will be kept in the sc_build table. If None then the
+aggregation will be run for each class found in the pras output
+file</p>
+</dd>
+<dt>tech_type<span class="classifier">str | list</span></dt><dd><p>Tech type for which to overwrite the generation profiles in the
+pras output file. Pras files will have the tech type in the
+[‘generation/_core’][‘name’] entry, which is used to select the
+correct output index</p>
+</dd>
+<dt>timezone<span class="classifier">str</span></dt><dd><p>Timezone for output generation profiles. This is a string that will
+be passed to pytz.timezone() e.g. US/Pacific, US/Mountain,
+US/Central, US/Eastern, or UTC. For a list of all available
+timezones, see pytz.all_timezones</p>
+</dd>
+<dt>dset_tag<span class="classifier">str</span></dt><dd><p>Dataset tag to append to dataset names in cf profile file. e.g. If
+the cf profile file is a multi year file using dset_tag=”-2008”
+will enable us to select the corresponding datasets
+(cf_mean-2008, cf_profile-2008, etc)</p>
+</dd>
+<dt>max_workers<span class="classifier">int | None</span></dt><dd><p>Max workers for parallel profile aggregation. None uses all
+available workers. 1 will run in serial.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="reVX.pras.rev_reeds_pras.PrasAggregation.available_res_gids">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">available_res_gids</span></span><a class="headerlink" href="#reVX.pras.rev_reeds_pras.PrasAggregation.available_res_gids" title="Link to this definition"></a></dt>
+<dd><p>Resource gids available in the cf file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>res_gids</strong> (<em>np.ndarray</em>) – Array of resource GIDs available in the cf file.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="reVX.pras.rev_reeds_pras.PrasAggregation.convert_bespoke_sc">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">convert_bespoke_sc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gid_column</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#reVX.pras.rev_reeds_pras.PrasAggregation.convert_bespoke_sc" title="Link to this definition"></a></dt>
+<dd><p>Convert a bespoke supply curve table to reference resource gids
+(res_gids) based on the bespoke generation outputs that are on the
+supply curve grid not the resource grid</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>table</strong> (<em>pd.DataFrame</em>) – rev_sc and reeds_build inner joined on supply curve gid.</p></li>
+<li><p><strong>gid_column</strong> (<em>str</em>) – String to use for sc_gid.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>table</strong> (<em>pd.DataFrame</em>) – Modified so that the “res_gids” points to the supply curve gids in
+the bespoke file so that the resource generation profiles will be
+taken based on the bespoke indexing.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="reVX.pras.rev_reeds_pras.PrasAggregation.forecast_map">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">forecast_map</span></span><a class="headerlink" href="#reVX.pras.rev_reeds_pras.PrasAggregation.forecast_map" title="Link to this definition"></a></dt>
+<dd><p>An array mapping the reV “actuals” generation data to forecast data
+of a different resolution (if input). This is an (n, 1) array where n
+is the number of “actuals” generation data points. So
+self.forecast_map[9] yields the forecast index that corresponds to
+index 9 in the cf_fpath reV generation output.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>np.ndarray | None</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="reVX.pras.rev_reeds_pras.PrasAggregation.get_unique_plant_names">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_unique_plant_names</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name_col</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tech_tag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#reVX.pras.rev_reeds_pras.PrasAggregation.get_unique_plant_names" title="Link to this definition"></a></dt>
+<dd><p>Get a list of ordered unique plant names</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>table</strong> (<em>pd.DataFrame</em>) – Plexos / plant meta data table where every row is a plant</p></li>
+<li><p><strong>name_col</strong> (<em>str</em>) – Column label in table. Exception will be raised if not found.</p></li>
+<li><p><strong>tech_tag</strong> (<em>str</em>) – Technology tag to append to plant names like “pv” or “wind”</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>names</strong> (<em>list | None</em>) – List of unique plant names</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="reVX.pras.rev_reeds_pras.PrasAggregation.make_profiles">
+<span class="sig-name descname"><span class="pre">make_profiles</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#reVX.pras.rev_reeds_pras.PrasAggregation.make_profiles" title="Link to this definition"></a></dt>
+<dd><p>Make a 2D array of aggregated plexos gen profiles.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>profiles</strong> (<em>np.ndarray</em>) – (t, n) array of Plexos node generation profiles where t is the
+timeseries length and n is the number of plexos nodes.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="reVX.pras.rev_reeds_pras.PrasAggregation.n_plexos_nodes">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">n_plexos_nodes</span></span><a class="headerlink" href="#reVX.pras.rev_reeds_pras.PrasAggregation.n_plexos_nodes" title="Link to this definition"></a></dt>
+<dd><p>Get the number of unique plexos nodes in this buildout.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>n</strong> (<em>int</em>) – Number of unique plexos nodes in this buildout</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="reVX.pras.rev_reeds_pras.PrasAggregation.node_map">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">node_map</span></span><a class="headerlink" href="#reVX.pras.rev_reeds_pras.PrasAggregation.node_map" title="Link to this definition"></a></dt>
+<dd><p>Nearest neighbor output mapping rev supply curve points to plants
+or plexos nodes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>np.ndarray</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="reVX.pras.rev_reeds_pras.PrasAggregation.plexos_meta">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">plexos_meta</span></span><a class="headerlink" href="#reVX.pras.rev_reeds_pras.PrasAggregation.plexos_meta" title="Link to this definition"></a></dt>
+<dd><p>Get plexos node meta data for the nodes included in this problem.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>plexos_meta</strong> (<em>pd.DataFrame</em>) – Plexos meta dataframe reduced to the nodes in this problem.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="reVX.pras.rev_reeds_pras.PrasAggregation.sc_build">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">sc_build</span></span><a class="headerlink" href="#reVX.pras.rev_reeds_pras.PrasAggregation.sc_build" title="Link to this definition"></a></dt>
+<dd><p>Get the reV supply curve table reduced to just those points built
+by reeds including a built_capacity column in MW.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>pd.DataFrame</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="reVX.pras.rev_reeds_pras.PrasAggregation.sc_res_gids">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">sc_res_gids</span></span><a class="headerlink" href="#reVX.pras.rev_reeds_pras.PrasAggregation.sc_res_gids" title="Link to this definition"></a></dt>
+<dd><p>List of unique resource GIDS in the REEDS build out.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>sc_res_gids</strong> (<em>np.ndarray</em>) – Array of resource GIDs associated with this REEDS buildout.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="reVX.pras.rev_reeds_pras.PrasAggregation.time_index">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">time_index</span></span><a class="headerlink" href="#reVX.pras.rev_reeds_pras.PrasAggregation.time_index" title="Link to this definition"></a></dt>
+<dd><p>Get the generation profile time index.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>time_index</strong> (<em>pd.Datetimeindex</em>) – Pandas datetime index sourced from the capacity factor data.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="reVX.pras.rev_reeds_pras.PrasAggregation.tz_alias">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">tz_alias</span></span><a class="headerlink" href="#reVX.pras.rev_reeds_pras.PrasAggregation.tz_alias" title="Link to this definition"></a></dt>
+<dd><p>Get a short 3-char tz alias if the timezone is common in the US
+(pst, mst, cst, est)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>str</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="reVX.pras.rev_reeds_pras.PrasAggregation.tz_convert_profiles">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">tz_convert_profiles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">profiles</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timezone</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#reVX.pras.rev_reeds_pras.PrasAggregation.tz_convert_profiles" title="Link to this definition"></a></dt>
+<dd><p>Convert profiles to local time and forward/back fill missing data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>profiles</strong> (<em>np.ndarray</em>) – Profiles of shape (time, n_plants) in UTC</p></li>
+<li><p><strong>timezone</strong> (<em>str</em>) – Timezone for output generation profiles. This is a string that will
+be passed to pytz.timezone() e.g. US/Pacific, US/Mountain,
+US/Central, US/Eastern, or UTC. For a list of all available
+timezones, see pytz.all_timezones</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>profiles</strong> (<em>np.ndarray</em>) – Profiles of shape (time, n_plants) in timezone</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="reVX.pras.rev_reeds_pras.html" class="btn btn-neutral float-left" title="reVX.pras.rev_reeds_pras" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="reVX.red_e.html" class="btn btn-neutral float-right" title="reVX.red_e" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, Alliance for Sustainable Energy, LLC.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

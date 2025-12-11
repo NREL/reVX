@@ -1,0 +1,6 @@
+reVX.setbacks.base.FEATURE\_FILTERS
+===================================
+
+.. currentmodule:: reVX.setbacks.base
+
+.. autodata:: FEATURE_FILTERS
