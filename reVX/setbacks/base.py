@@ -385,8 +385,7 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
         """
         (features_ids, features_fp, col, crs, features_filter_type,
          buffer_type, rasterizer) = args
-        logger.debug('- Computing setbacks for county FIPS {}'
-                     .format(county.iloc[0]['FIPS']))
+        logger.debug('- Computing setbacks for:\n{}'.format(county.iloc[0]))
         log_mem(logger)
         features = _load_features(features_ids, features_fp, col, crs)
         feature_bounds = _buffered_feature_bounds(features, rasterizer,
