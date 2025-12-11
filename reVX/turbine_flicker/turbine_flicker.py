@@ -317,8 +317,7 @@ class TurbineFlicker(AbstractBaseExclusionsMerger):
         (hub_height, rotor_diameter, points, res_fpath,
          max_flicker_exclusion_range, grid_cell_size, steps_per_hour,
          building_layer, resolution) = args
-        logger.debug('- Computing flicker for county FIPS {}'
-                     .format(county.iloc[0]['FIPS']))
+        logger.debug('- Computing flicker for:\n{}'.format(county.iloc[0]))
         flicker = compute_flicker_exclusions(hub_height, rotor_diameter,
                                              points, res_fpath,
                                              regulation_value,
