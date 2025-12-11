@@ -62,6 +62,10 @@ class SetbackRegulations(AbstractBaseRegulations):
                   required). This is used to match the county
                   regulations to the county's spatial extent.
 
+                  .. NOTE:: This column is optional if the regulations
+                     file already includes a ``geometry`` column that
+                     defines the spatial boundaries for each row.
+
             Valid options for the ``Value Type`` are (case-insensitive;
             dashes, underscores, and spaces are interchangeable):
 
@@ -202,6 +206,10 @@ class WindSetbackRegulations(SetbackRegulations):
                   county (this can be an integer - no leading zeros
                   required). This is used to match the county
                   regulations to the county's spatial extent.
+
+                  .. NOTE:: This column is optional if the regulations
+                     file already includes a ``geometry`` column that
+                     defines the spatial boundaries for each row.
 
             Valid options for the ``Value Type`` are (case-insensitive;
             dashes, underscores, and spaces are interchangeable):
