@@ -72,6 +72,6 @@ Recommended Citation
 
 Update with current version and DOI:
 
-Michael Rossol, Grant Buster, and Robert Spencer. The Renewable Energy
-Potential(V) eXchange Tool: reVX. https://github.com/NREL/reVX
+Michael Rossol, Grant Buster, and Robert Spencer.
+The reV eXchange Tool: reVX. https://github.com/NREL/reVX
 (version v0.3.20), 2021. https://doi.org/10.5281/zenodo.4507580.

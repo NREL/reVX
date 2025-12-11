@@ -77,5 +77,6 @@ body:
     id: charge-code
     attributes:
       label: Charge code
-      placeholder: >
-        If you are at NREL and fixing this bug is urgent, please provide a charge code
+      options:
+        - label: >
+            I am at NLR and am willing to provide a charge code to have this bug fixed urgently.
