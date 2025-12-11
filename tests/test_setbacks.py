@@ -799,10 +799,16 @@ def test_merged_setbacks(setbacks_class, regulations_class, features_path,
     # Make sure counties in the regulations csv
     # have correct exclusions applied
     with ExclusionLayers(EXCL_H5) as exc:
-        fips = exc['cnty_fips']
+        exc_shape = exc.shape
+        cnty_fips_profile = exc.get_layer_profile('cnty_fips')
 
-    counties_should_have_exclusions = feats.FIPS.unique()
-    local_setbacks_mask = np.isin(fips, counties_should_have_exclusions)
+    local_setbacks_mask = rasterio.features.rasterize(
+        ((geom, 1) for geom in feats.geometry.to_list()),
+        out_shape=exc_shape,
+        transform=cnty_fips_profile["transform"],
+        fill=0,
+        dtype=np.uint8
+    ).astype(bool)
 
     assert not np.allclose(generic_layer[local_setbacks_mask],
                            merged_layer[local_setbacks_mask])
