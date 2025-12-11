@@ -24,7 +24,7 @@ sys.path.insert(0, os.path.abspath('../../'))
 
 project = 'reVX'
 copyright = '2020, Alliance for Sustainable Energy, LLC'
-author = 'NREL: Michael Rossol, Grant Buster'
+author = 'NLR: Michael Rossol, Grant Buster'
 
 pkg = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
 pkg = os.path.dirname(pkg)
@@ -117,7 +117,7 @@ html_css_file = ["custom.css"]
 
 html_context = {
     "display_github": True,
-    "github_user": "nrel",
+    "github_user": "nlr",
     "github_repo": "reVX",
     "github_version": "main",
     "conf_py_path": "/docs/source/",

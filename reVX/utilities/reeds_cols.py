@@ -65,9 +65,9 @@ def _lowercase_alpha_only(in_str):
 
 
 def add_nrel_regions(data_frame):
-    """Add NREL Regions info to a Pandas DataFrame with coordinates.
+    """Add NLR Regions info to a Pandas DataFrame with coordinates.
 
-    The input DataFrame must have a "state" column containing teh state
+    The input DataFrame must have a "state" column containing the state
     name for each row.
 
     Parameters

@@ -8,7 +8,7 @@ build-backend = 'setuptools.build_meta'
 [project]
 name="NREL-reVX"
 dynamic = ["version"]
-description = "National Renewable Energy Laboratory's (NREL's) Renewable Energy Potential(V) eXchange Tool: reVX"
+description = "National Laboratory of the Rockies' (NLR's) reV eXchange Tool: reVX"
 readme = {file = "README.rst", content-type = "text/x-rst"}
 authors = [
   {name = "Michael Rossol", email = "michael.rossol@nrel.gov"},
@@ -18,7 +18,7 @@ maintainers = [
   {name = "Paul Pinchuk", email = "ppinchuk@nrel.gov"},
 ]
 license = "BSD-3-Clause"
-keywords = ["reVX", "NREL"]
+keywords = ["reVX", "NLR"]
 requires-python = ">= 3.9"
 classifiers=[
   "Development Status :: 4 - Beta",

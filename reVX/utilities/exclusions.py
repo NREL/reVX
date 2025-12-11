@@ -14,8 +14,9 @@ import numpy as np
 import geopandas as gpd
 import pandas as pd
 from pyproj.crs import CRS
-import rasterio
 from rasterio import features as rio_features
+from rasterio import windows as rio_windows
+from affine import Affine
 from shapely.geometry import shape
 
 from rex import Outputs
@@ -145,7 +146,7 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         self._regulations = regulations
         self._features = features
         self._hsds = hsds
-        self._fips = self._profile = None
+        self._profile = None
         self._set_profile()
         self._process_regulations(regulations.df)
 
@@ -180,8 +181,37 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         if regulations_df is None:
             return
 
+        if self._regulations.geometry_provided:
+            self._regulations.df = self._validate_regulations_geopackage_input(
+                regulations_df)
+            return
+
+        self._regulations.df = self._add_region_shapes_from_fips_layer(
+            regulations_df)
+
+    def _validate_regulations_geopackage_input(self, regulations_df):
+        """Validate regulations GeoDataFrame input.="""
+        geometry_mask = ~regulations_df['geometry'].isna()
+        if not geometry_mask.any():
+            msg = ('Regulations were supplied with a geometry column, '
+                    'but all geometries are null.')
+            logger.error(msg)
+            raise RuntimeError(msg)
+
+        regs_with_geom = regulations_df.loc[geometry_mask].copy()
+        if regs_with_geom.crs is None:
+            msg = ('Regulations geometries must have a defined CRS. '
+                    'Set the CRS prior to computing exclusions.')
+            logger.error(msg)
+            raise RuntimeError(msg)
+
+        regs_with_geom = regs_with_geom.to_crs(crs=self.profile['crs'])
+        return regs_with_geom.reset_index(drop=True)
+
+    def _add_region_shapes_from_fips_layer(self, regulations_df):
+        """Add shapes to regulations by rasterizing county FIPS layer"""
         with ExclusionLayers(self._excl_fpath, hsds=self._hsds) as exc:
-            self._fips = exc['cnty_fips']
+            fips = exc['cnty_fips']
             cnty_fips_profile = exc.get_layer_profile('cnty_fips')
 
         if 'FIPS' not in regulations_df:
@@ -198,7 +228,7 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
 
         logger.info('Merging county geometries w/ local regulations')
         shapes_from_raster = rio_features.shapes(
-            self._fips.astype(np.int32),
+            fips.astype(np.int32),
             transform=cnty_fips_profile['transform']
         )
         county_regs = []
@@ -218,8 +248,7 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
             geometry='geometry'
         )
         regulations_df = regulations_df.reset_index()
-        regulations_df = regulations_df.to_crs(crs=self.profile['crs'])
-        self._regulations.df = regulations_df
+        return regulations_df.to_crs(crs=self.profile['crs'])
 
     @property
     def profile(self):
@@ -330,10 +359,11 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
                 out = self.compute_local_exclusions(exclusion_value, cnty,
                                                     *args)
                 local_exclusions, slices = out
-                fips = cnty['FIPS'].unique()
+                geometry = cnty.geometry.to_list()
                 exclusions = self._combine_exclusions(exclusions,
                                                       local_exclusions,
-                                                      fips, slices)
+                                                      slices,
+                                                      local_geometry=geometry)
                 logger.debug("Computed exclusions for {:,} counties"
                              .format(ind))
         if exclusions is None:
@@ -349,7 +379,8 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
             exclusion_value, cnty, args = reg
             future = exe.submit(self.compute_local_exclusions,
                                 exclusion_value, cnty, *args)
-            futures[future] = cnty['FIPS'].unique()
+            geometry = cnty.geometry.to_list()
+            futures[future] = geometry
             if ind % max_submissions == 0:
                 exclusions = self._collect_local_futures(futures, exclusions)
         exclusions = self._collect_local_futures(futures, exclusions)
@@ -359,10 +390,11 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         """Collect all futures from the input dictionary. """
         for future in as_completed(futures):
             new_exclusions, slices = future.result()
+            geometry = futures.pop(future)
             exclusions = self._combine_exclusions(exclusions,
                                                   new_exclusions,
-                                                  futures.pop(future),
-                                                  slices=slices)
+                                                  slices=slices,
+                                                  local_geometry=geometry)
             log_mem(logger)
         return exclusions
 
@@ -444,12 +476,13 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         """Merge local exclusions onto the generic exclusions."""
         logger.info('Merging local exclusions onto the generic exclusions')
 
-        local_fips = self.regulations_table["FIPS"].unique()
+        local_geometry = self.regulations_table.geometry.to_list()
         return self._combine_exclusions(generic_exclusions, local_exclusions,
-                                        local_fips, replace_existing=True)
+                                        replace_existing=True,
+                                        local_geometry=local_geometry)
 
-    def _combine_exclusions(self, existing, additional=None, cnty_fips=None,
-                            slices=None, replace_existing=False):
+    def _combine_exclusions(self, existing, additional=None, slices=None,
+                            replace_existing=False, local_geometry=None):
         """Combine local exclusions using FIPS code"""
         if additional is None:
             return existing
@@ -460,10 +493,11 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         if slices is None:
             slices = tuple([slice(None)] * len(existing.shape))
 
-        if cnty_fips is None:
+        if local_geometry is None:
             local_exclusions = slice(None)
         else:
-            local_exclusions = np.isin(self._fips[slices], cnty_fips)
+            local_exclusions = self._geometry_mask(local_geometry, slices,
+                                                   additional.shape)
 
         if replace_existing:
             new_local_exclusions = additional[local_exclusions]
@@ -473,6 +507,30 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
                 additional[local_exclusions])
         existing[slices][local_exclusions] = new_local_exclusions
         return existing
+
+    def _geometry_mask(self, geometry, slices, target_shape):
+        """Rasterize geometry into a boolean mask for the provided window."""
+        geoms = [geom for geom in geometry if geom and not geom.is_empty]
+        if not geoms:
+            return np.zeros(target_shape, dtype=bool)
+
+        array_shape = (self.profile['height'], self.profile['width'])
+        row_slice, col_slice = slices
+        window = rio_windows.Window.from_slices(row_slice, col_slice,
+                                                height=array_shape[0],
+                                                width=array_shape[1])
+        base_transform = self.profile['transform']
+        if not isinstance(base_transform, Affine):
+            base_transform = Affine(*base_transform)
+
+        transform = rio_windows.transform(window, base_transform)
+        mask = rio_features.rasterize(((geom, 1) for geom in geoms),
+                                      out_shape=target_shape,
+                                      transform=transform,
+                                      fill=0,
+                                      dtype=np.uint8)
+
+        return mask.astype(bool)
 
     @classmethod
     def run(cls, excl_fpath, features_path, out_fn, regulations,

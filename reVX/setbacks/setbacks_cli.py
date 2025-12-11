@@ -249,8 +249,10 @@ def compute_setbacks(excl_fpath, node_feature_type, node_file_path,
     Parameters
     ----------
     excl_fpath : str
-        Path to HDF5 file containing the county FIPS layer (should be
-        called ``cnty_fips``) used to match local regulations in
+        Path to HDF5 file containing output layer profile information.
+        If you are providing a ``regulations_fpath`` input that is not a
+        GeoPackage, this HDF5 file should also contain a county FIPS
+        layer (called ``cnty_fips``) used to match local regulations in
         ``regulations_fpath`` to counties on the grid. No data will be
         written to this file unless explicitly requested via the
         ``out_layers`` input.
