@@ -502,6 +502,30 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         existing[slices][local_exclusions] = new_local_exclusions
         return existing
 
+    def _geometry_mask(self, geometry, slices, target_shape):
+        """Rasterize geometry into a boolean mask for the provided window."""
+        geoms = [geom for geom in geometry if geom and not geom.is_empty]
+        if not geoms:
+            return np.zeros(target_shape, dtype=bool)
+
+        array_shape = (self.profile['height'], self.profile['width'])
+        row_slice, col_slice = slices
+        window = rio_windows.Window.from_slices(row_slice, col_slice,
+                                                height=array_shape[0],
+                                                width=array_shape[1])
+        base_transform = self.profile['transform']
+        if not isinstance(base_transform, Affine):
+            base_transform = Affine(*base_transform)
+
+        transform = rio_windows.transform(window, base_transform)
+        mask = rio_features.rasterize(((geom, 1) for geom in geoms),
+                                      out_shape=target_shape,
+                                      transform=transform,
+                                      fill=0,
+                                      dtype=np.uint8)
+
+        return mask.astype(bool)
+
     @classmethod
     def run(cls, excl_fpath, features_path, out_fn, regulations,
             max_workers=None, replace=False, out_layers=None, hsds=False,
