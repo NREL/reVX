@@ -89,6 +89,26 @@ def county_wind_regulations_gpkg():
                                   regulations_fpath=REGS_GPKG)
 
 
+@pytest.fixture
+def county_wind_regulations_gpkg_no_fips(tmp_path):
+    """Wind regulations with geometries but without FIPS codes."""
+    structures_path = os.path.join(TESTDATADIR, 'setbacks',
+                                   'RhodeIsland.gpkg')
+    baseline_regs = WindSetbackRegulations(HUB_HEIGHT, ROTOR_DIAMETER,
+                                           regulations_fpath=REGS_GPKG)
+    baseline_setbacks = SETBACKS["structure"](EXCL_H5, baseline_regs,
+                                              features=structures_path)
+    processed_regs = (baseline_setbacks
+                      .regulations_table
+                      .drop(columns=['FIPS']).copy())
+
+    regs_path = tmp_path / 'ri_wind_regs_no_fips.gpkg'
+    processed_regs.to_file(regs_path, driver='GPKG')
+
+    return WindSetbackRegulations(HUB_HEIGHT, ROTOR_DIAMETER,
+                                  regulations_fpath=str(regs_path))
+
+
 @pytest.fixture()
 def return_to_main_test_dir():
     """Return to the starting dir after running a test.
@@ -372,6 +392,26 @@ def test_local_structures(max_workers, county_wind_regulations_gpkg):
 
     test = setbacks.compute_exclusions(max_workers=max_workers)
     assert test.sum() == 2879
+
+
+@pytest.mark.parametrize('max_workers', [None, 1])
+def test_local_structures_no_fips(max_workers, county_wind_regulations_gpkg,
+                                  county_wind_regulations_gpkg_no_fips):
+    """Test local setbacks using regulations that provide geometries only."""
+
+    structures_path = os.path.join(TESTDATADIR, 'setbacks', 'RhodeIsland.gpkg')
+
+    baseline = SETBACKS["structure"](EXCL_H5,
+                                     county_wind_regulations_gpkg,
+                                     features=structures_path)
+    baseline_result = baseline.compute_exclusions(max_workers=max_workers)
+
+    no_fips = SETBACKS["structure"](EXCL_H5,
+                                    county_wind_regulations_gpkg_no_fips,
+                                    features=structures_path)
+    test_result = no_fips.compute_exclusions(max_workers=max_workers)
+
+    assert np.allclose(test_result, baseline_result)
 
 
 @pytest.mark.parametrize('max_workers', [None, 1])
