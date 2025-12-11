@@ -14,8 +14,9 @@ import numpy as np
 import geopandas as gpd
 import pandas as pd
 from pyproj.crs import CRS
-import rasterio
 from rasterio import features as rio_features
+from rasterio import windows as rio_windows
+from affine import Affine
 from shapely.geometry import shape
 
 from rex import Outputs
