@@ -109,7 +109,7 @@ def county_wind_regulations_gpkg_no_fips(tmp_path):
                                   regulations_fpath=str(regs_path))
 
 
-@pytest.fixture()
+@pytest.fixture
 def return_to_main_test_dir():
     """Return to the starting dir after running a test.
 
@@ -280,11 +280,14 @@ def test_setbacks_no_computation(setbacks_class):
 
 @pytest.mark.parametrize(
     ('setbacks_class', 'feature_file'),
-    [(SETBACKS["parcel"],
-      os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
-                   'Rhode_Island.gpkg')),
-     (SETBACKS["water"],
-      os.path.join(TESTDATADIR, 'setbacks', 'Rhode_Island_Water.gpkg'))])
+    [pytest.param(SETBACKS["parcel"],
+                  os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
+                               'Rhode_Island.gpkg'),
+                  id="PropertyLines"),
+     pytest.param(SETBACKS["water"],
+                  os.path.join(TESTDATADIR, 'setbacks',
+                               'Rhode_Island_Water.gpkg'),
+                  id="Water")])
 def test_setbacks_no_generic_value(setbacks_class, feature_file):
     """Test setbacks computation for invalid input. """
     regs = SetbackRegulations(0, regulations_fpath=None, multiplier=1)
@@ -373,15 +376,15 @@ def test_generic_structure(generic_wind_regulations, max_workers):
 
 
 @pytest.mark.parametrize('max_workers', [None, 1])
-def test_local_structures(max_workers, county_wind_regulations_gpkg):
+def test_local_structures(max_workers, county_wind_regulations):
     """
     Test local structures setbacks
     """
-    mask = county_wind_regulations_gpkg.df["FIPS"] == 44005
-    initial_regs_count = county_wind_regulations_gpkg.df[mask].shape[0]
+    mask = county_wind_regulations.df["FIPS"] == 44005
+    initial_regs_count = county_wind_regulations.df[mask].shape[0]
 
     structures_path = os.path.join(TESTDATADIR, 'setbacks', 'RhodeIsland.gpkg')
-    setbacks = SETBACKS["structure"](EXCL_H5, county_wind_regulations_gpkg,
+    setbacks = SETBACKS["structure"](EXCL_H5, county_wind_regulations,
                                      features=structures_path)
 
     mask = setbacks.regulations_table["FIPS"] == 44005
@@ -501,8 +504,9 @@ def test_generic_parcels_with_invalid_shape_input(max_workers):
 @pytest.mark.parametrize('max_workers', [None, 1])
 @pytest.mark.parametrize(
     'regulations_fpath',
-    [PARCEL_REGS_FPATH_VALUE,
-     PARCEL_REGS_FPATH_MULTIPLIER_SOLAR]
+    [pytest.param(PARCEL_REGS_FPATH_VALUE, id="PropertyLines"),
+     pytest.param(PARCEL_REGS_FPATH_MULTIPLIER_SOLAR,
+                  id="PropertyLinesWithMultiplier")]
 )
 def test_local_parcels_solar(max_workers, regulations_fpath):
     """
@@ -539,8 +543,9 @@ def test_local_parcels_solar(max_workers, regulations_fpath):
 @pytest.mark.parametrize('max_workers', [None, 1])
 @pytest.mark.parametrize(
     'regulations_fpath',
-    [PARCEL_REGS_FPATH_VALUE,
-     PARCEL_REGS_FPATH_MULTIPLIER_WIND]
+    [pytest.param(PARCEL_REGS_FPATH_VALUE, id="PropertyLines"),
+     pytest.param(PARCEL_REGS_FPATH_MULTIPLIER_WIND,
+                  id="PropertyLinesWithMultiplier")]
 )
 def test_local_parcels_wind(max_workers, regulations_fpath):
     """
@@ -603,8 +608,9 @@ def test_generic_water_setbacks(max_workers):
 
 @pytest.mark.parametrize('max_workers', [None, 1])
 @pytest.mark.parametrize('regulations_fpath',
-                         [WATER_REGS_FPATH_VALUE,
-                          WATER_REGS_FPATH_MULTIPLIER_SOLAR])
+                         [pytest.param(WATER_REGS_FPATH_VALUE, id="Water"),
+                          pytest.param(WATER_REGS_FPATH_MULTIPLIER_SOLAR,
+                                       id="WaterWithMultiplier")])
 def test_local_water_solar(max_workers, regulations_fpath):
     """
     Test local water setbacks for solar
@@ -637,8 +643,9 @@ def test_local_water_solar(max_workers, regulations_fpath):
 
 @pytest.mark.parametrize('max_workers', [None, 1])
 @pytest.mark.parametrize('regulations_fpath',
-                         [WATER_REGS_FPATH_VALUE,
-                          WATER_REGS_FPATH_MULTIPLIER_WIND])
+                         [pytest.param(WATER_REGS_FPATH_VALUE, id="Water"),
+                          pytest.param(WATER_REGS_FPATH_MULTIPLIER_WIND,
+                                       id="WaterWithMultiplier")])
 def test_local_water_wind(max_workers, regulations_fpath):
     """
     Test local water setbacks for wind
@@ -766,30 +773,46 @@ def test_partial_exclusions_upscale_factor_less_than_1(mult):
 @pytest.mark.parametrize(
     ('setbacks_class', 'regulations_class', 'features_path',
      'regulations_fpath', 'generic_sum', 'local_sum', 'setback_distance'),
-    [(SETBACKS["structure"], WindSetbackRegulations,
-      os.path.join(TESTDATADIR, 'setbacks', 'RhodeIsland.gpkg'),
-      REGS_GPKG, 332_887, 2_879, [HUB_HEIGHT, ROTOR_DIAMETER]),
-     (SETBACKS["rail"], WindSetbackRegulations,
-      os.path.join(TESTDATADIR, 'setbacks', 'Rhode_Island_Railroads.gpkg'),
-      REGS_GPKG, 754_082, 13_808, [HUB_HEIGHT, ROTOR_DIAMETER]),
-     (SETBACKS["parcel"], WindSetbackRegulations,
-      os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels', 'Rhode_Island.gpkg'),
-      PARCEL_REGS_FPATH_VALUE, 474, 3, [HUB_HEIGHT, ROTOR_DIAMETER]),
-     (SETBACKS["water"], WindSetbackRegulations,
-      os.path.join(TESTDATADIR, 'setbacks', 'Rhode_Island_Water.gpkg'),
-      WATER_REGS_FPATH_VALUE, 1_159_266, 83, [HUB_HEIGHT, ROTOR_DIAMETER]),
-     (SETBACKS["structure"], SetbackRegulations,
-      os.path.join(TESTDATADIR, 'setbacks', 'RhodeIsland.gpkg'),
-      REGS_FPATH, 260_963, 2_306, [BASE_SETBACK_DIST + 199]),
-     (SETBACKS["rail"], SetbackRegulations,
-      os.path.join(TESTDATADIR, 'setbacks', 'Rhode_Island_Railroads.gpkg'),
-      REGS_FPATH, 5_355, 53, [BASE_SETBACK_DIST]),
-     (SETBACKS["parcel"], SetbackRegulations,
-      os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels', 'Rhode_Island.gpkg'),
-      PARCEL_REGS_FPATH_VALUE, 438, 3, [BASE_SETBACK_DIST]),
-     (SETBACKS["water"], SetbackRegulations,
-      os.path.join(TESTDATADIR, 'setbacks', 'Rhode_Island_Water.gpkg'),
-      WATER_REGS_FPATH_VALUE, 88_994, 83, [BASE_SETBACK_DIST])])
+    [pytest.param(SETBACKS["structure"], WindSetbackRegulations,
+                  os.path.join(TESTDATADIR, 'setbacks', 'RhodeIsland.gpkg'),
+                  REGS_FPATH, 332_887, 2_879, [HUB_HEIGHT, ROTOR_DIAMETER],
+                  id="Structures-Wind"),
+     pytest.param(SETBACKS["rail"], WindSetbackRegulations,
+                  os.path.join(TESTDATADIR, 'setbacks',
+                               'Rhode_Island_Railroads.gpkg'),
+                               REGS_FPATH, 754_082, 13_808,
+                               [HUB_HEIGHT, ROTOR_DIAMETER],
+                               id="Rail-Wind"),
+     pytest.param(SETBACKS["parcel"], WindSetbackRegulations,
+                  os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
+                               'Rhode_Island.gpkg'),
+                               PARCEL_REGS_FPATH_VALUE, 474, 3,
+                               [HUB_HEIGHT, ROTOR_DIAMETER],
+                               id="PropertyLine-Wind"),
+     pytest.param(SETBACKS["water"], WindSetbackRegulations,
+                  os.path.join(TESTDATADIR, 'setbacks',
+                               'Rhode_Island_Water.gpkg'),
+                               WATER_REGS_FPATH_VALUE, 1_159_266, 83,
+                               [HUB_HEIGHT, ROTOR_DIAMETER], id="Water-Wind"),
+     pytest.param(SETBACKS["structure"], SetbackRegulations,
+                  os.path.join(TESTDATADIR, 'setbacks', 'RhodeIsland.gpkg'),
+                  REGS_FPATH, 260_963, 2_306, [BASE_SETBACK_DIST + 199],
+                  id="Structures-Solar"),
+     pytest.param(SETBACKS["rail"], SetbackRegulations,
+                  os.path.join(TESTDATADIR, 'setbacks',
+                               'Rhode_Island_Railroads.gpkg'),
+                               REGS_FPATH, 5_355, 53, [BASE_SETBACK_DIST],
+                               id="Rail-Solar"),
+     pytest.param(SETBACKS["parcel"], SetbackRegulations,
+                  os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
+                               'Rhode_Island.gpkg'),
+                               PARCEL_REGS_FPATH_VALUE, 438, 3,
+                               [BASE_SETBACK_DIST], id="PropertyLine-Solar"),
+     pytest.param(SETBACKS["water"], SetbackRegulations,
+                  os.path.join(TESTDATADIR, 'setbacks',
+                               'Rhode_Island_Water.gpkg'),
+                               WATER_REGS_FPATH_VALUE, 88_994, 83,
+                               [BASE_SETBACK_DIST], id="Water-Solar")])
 @pytest.mark.parametrize('sf', [None, 10])
 def test_merged_setbacks(setbacks_class, regulations_class, features_path,
                          regulations_fpath, generic_sum, local_sum,
@@ -864,30 +887,45 @@ def test_merged_setbacks(setbacks_class, regulations_class, features_path,
 @pytest.mark.parametrize(
     ('setbacks_class', 'regulations_class', 'features_path',
      'regulations_fpath', 'generic_sum', 'setback_distance'),
-    [(SETBACKS["structure"], WindSetbackRegulations,
-      os.path.join(TESTDATADIR, 'setbacks', 'RhodeIsland.gpkg'),
-      REGS_FPATH, 332_887, [HUB_HEIGHT, ROTOR_DIAMETER]),
-     (SETBACKS["rail"], WindSetbackRegulations,
-      os.path.join(TESTDATADIR, 'setbacks', 'Rhode_Island_Railroads.gpkg'),
-      REGS_FPATH, 754_082, [HUB_HEIGHT, ROTOR_DIAMETER]),
-     (SETBACKS["parcel"], WindSetbackRegulations,
-      os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels', 'Rhode_Island.gpkg'),
-      PARCEL_REGS_FPATH_VALUE, 474, [HUB_HEIGHT, ROTOR_DIAMETER]),
-     (SETBACKS["water"], WindSetbackRegulations,
-      os.path.join(TESTDATADIR, 'setbacks', 'Rhode_Island_Water.gpkg'),
-      WATER_REGS_FPATH_VALUE, 1_159_266, [HUB_HEIGHT, ROTOR_DIAMETER]),
-     (SETBACKS["structure"], SetbackRegulations,
-      os.path.join(TESTDATADIR, 'setbacks', 'RhodeIsland.gpkg'),
-      REGS_FPATH, 260_963, [BASE_SETBACK_DIST + 199]),
-     (SETBACKS["rail"], SetbackRegulations,
-      os.path.join(TESTDATADIR, 'setbacks', 'Rhode_Island_Railroads.gpkg'),
-      REGS_FPATH, 5_355, [BASE_SETBACK_DIST]),
-     (SETBACKS["parcel"], SetbackRegulations,
-      os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels', 'Rhode_Island.gpkg'),
-      PARCEL_REGS_FPATH_VALUE, 438, [BASE_SETBACK_DIST]),
-     (SETBACKS["water"], SetbackRegulations,
-      os.path.join(TESTDATADIR, 'setbacks', 'Rhode_Island_Water.gpkg'),
-      WATER_REGS_FPATH_VALUE, 88_994, [BASE_SETBACK_DIST])])
+    [pytest.param(SETBACKS["structure"], WindSetbackRegulations,
+                  os.path.join(TESTDATADIR, 'setbacks', 'RhodeIsland.gpkg'),
+                  REGS_FPATH, 332_887, [HUB_HEIGHT, ROTOR_DIAMETER],
+                  id="Structures-Wind"),
+     pytest.param(SETBACKS["rail"], WindSetbackRegulations,
+                  os.path.join(TESTDATADIR, 'setbacks',
+                               'Rhode_Island_Railroads.gpkg'),
+                               REGS_FPATH, 754_082,
+                               [HUB_HEIGHT, ROTOR_DIAMETER], id="Rail-Wind"),
+     pytest.param(SETBACKS["parcel"], WindSetbackRegulations,
+                  os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
+                               'Rhode_Island.gpkg'),
+                               PARCEL_REGS_FPATH_VALUE, 474,
+                               [HUB_HEIGHT, ROTOR_DIAMETER],
+                               id="PropertyLine-Wind"),
+     pytest.param(SETBACKS["water"], WindSetbackRegulations,
+                  os.path.join(TESTDATADIR, 'setbacks',
+                               'Rhode_Island_Water.gpkg'),
+                               WATER_REGS_FPATH_VALUE, 1_159_266,
+                               [HUB_HEIGHT, ROTOR_DIAMETER], id="Water-Wind"),
+     pytest.param(SETBACKS["structure"], SetbackRegulations,
+                  os.path.join(TESTDATADIR, 'setbacks', 'RhodeIsland.gpkg'),
+                  REGS_FPATH, 260_963, [BASE_SETBACK_DIST + 199],
+                  id="Structures-Solar"),
+     pytest.param(SETBACKS["rail"], SetbackRegulations,
+                  os.path.join(TESTDATADIR, 'setbacks',
+                               'Rhode_Island_Railroads.gpkg'),
+                               REGS_FPATH, 5_355, [BASE_SETBACK_DIST],
+                               id="Rail-Solar"),
+     pytest.param(SETBACKS["parcel"], SetbackRegulations,
+                  os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
+                               'Rhode_Island.gpkg'),
+                               PARCEL_REGS_FPATH_VALUE, 438,
+                               [BASE_SETBACK_DIST], id="PropertyLine-Solar"),
+     pytest.param(SETBACKS["water"], SetbackRegulations,
+                  os.path.join(TESTDATADIR, 'setbacks',
+                               'Rhode_Island_Water.gpkg'),
+                               WATER_REGS_FPATH_VALUE, 88_994,
+                               [BASE_SETBACK_DIST], id="Water-Solar")])
 def test_merged_setbacks_missing_local(setbacks_class, regulations_class,
                                        features_path, regulations_fpath,
                                        generic_sum, setback_distance):
@@ -1017,14 +1055,14 @@ def test_cli_railroads(runner, config_input):
 
 @pytest.mark.parametrize(
     ("config_input", "regs"),
-    (({"base_setback_dist": BASE_SETBACK_DIST},
-      PARCEL_REGS_FPATH_VALUE),
-     ({"hub_height": 0.75, "rotor_diameter": 0.5},
-      PARCEL_REGS_FPATH_VALUE),
-     ({"base_setback_dist": BASE_SETBACK_DIST},
-      PARCEL_REGS_FPATH_MULTIPLIER_SOLAR),
-     ({"hub_height": 0.75, "rotor_diameter": 0.5},
-      PARCEL_REGS_FPATH_MULTIPLIER_WIND)))
+    (pytest.param({"base_setback_dist": BASE_SETBACK_DIST},
+                  PARCEL_REGS_FPATH_VALUE, id="Base-Solar"),
+     pytest.param({"hub_height": 0.75, "rotor_diameter": 0.5},
+                  PARCEL_REGS_FPATH_VALUE, id="Base-Wind"),
+     pytest.param({"base_setback_dist": BASE_SETBACK_DIST},
+                  PARCEL_REGS_FPATH_MULTIPLIER_SOLAR, id="Multiplier-Solar"),
+     pytest.param({"hub_height": 0.75, "rotor_diameter": 0.5},
+                  PARCEL_REGS_FPATH_MULTIPLIER_WIND, id="Multiplier-Wind")))
 def test_cli_parcels(runner, config_input, regs):
     """
     Test CLI with Parcels.
@@ -1064,14 +1102,14 @@ def test_cli_parcels(runner, config_input, regs):
 
 @pytest.mark.parametrize(
     ("config_input", "regs"),
-    (({"base_setback_dist": BASE_SETBACK_DIST},
-      WATER_REGS_FPATH_VALUE),
-     ({"hub_height": 4, "rotor_diameter": 2},
-      WATER_REGS_FPATH_VALUE),
-     ({"base_setback_dist": BASE_SETBACK_DIST},
-      WATER_REGS_FPATH_MULTIPLIER_SOLAR),
-     ({"hub_height": 4, "rotor_diameter": 2},
-      WATER_REGS_FPATH_MULTIPLIER_WIND)))
+    (pytest.param({"base_setback_dist": BASE_SETBACK_DIST},
+                  WATER_REGS_FPATH_VALUE, id="Base-Solar"),
+     pytest.param({"hub_height": 4, "rotor_diameter": 2},
+                  WATER_REGS_FPATH_VALUE, id="Base-Wind"),
+     pytest.param({"base_setback_dist": BASE_SETBACK_DIST},
+                  WATER_REGS_FPATH_MULTIPLIER_SOLAR, id="Multiplier-Solar"),
+     pytest.param({"hub_height": 4, "rotor_diameter": 2},
+                  WATER_REGS_FPATH_MULTIPLIER_WIND, id="Multiplier-Wind")))
 def test_cli_water(runner, config_input, regs):
     """
     Test CLI with water setbacks.
@@ -1227,18 +1265,26 @@ def test_cli_multiple_generic_multipliers(runner, as_file):
 @pytest.mark.parametrize(
     ('setbacks_type', "out_fn", 'features_path', 'regulations_fpath',
      'config_input'),
-    [("structure", "RhodeIsland.tif",
-      os.path.join(TESTDATADIR, 'setbacks', 'RhodeIsland.gpkg'),
-      REGS_GPKG, {"hub_height": BASE_SETBACK_DIST, "rotor_diameter": 0}),
-     ("rail", "Rhode_Island_Railroads.tif",
-      os.path.join(TESTDATADIR, 'setbacks', 'Rhode_Island_Railroads.gpkg'),
-      REGS_GPKG, {"hub_height": BASE_SETBACK_DIST, "rotor_diameter": 0}),
-     ("parcel", "Rhode_Island.tif",
-      os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels', 'Rhode_Island.gpkg'),
-      PARCEL_REGS_FPATH_VALUE, {"base_setback_dist": BASE_SETBACK_DIST}),
-     ("water", "Rhode_Island_Water.tif",
-      os.path.join(TESTDATADIR, 'setbacks', 'Rhode_Island_Water.gpkg'),
-      WATER_REGS_FPATH_VALUE, {"base_setback_dist": BASE_SETBACK_DIST})])
+    [pytest.param("structure", "RhodeIsland.tif",
+                  os.path.join(TESTDATADIR, 'setbacks', 'RhodeIsland.gpkg'),
+                  REGS_GPKG, {"hub_height": BASE_SETBACK_DIST,
+                              "rotor_diameter": 0}, id="Structures"),
+     pytest.param("rail", "Rhode_Island_Railroads.tif",
+                  os.path.join(TESTDATADIR, 'setbacks',
+                               'Rhode_Island_Railroads.gpkg'),
+                  REGS_GPKG, {"hub_height": BASE_SETBACK_DIST,
+                              "rotor_diameter": 0}, id="Railroads"),
+     pytest.param("parcel", "Rhode_Island.tif",
+                  os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
+                               'Rhode_Island.gpkg'),
+                  PARCEL_REGS_FPATH_VALUE,
+                  {"base_setback_dist": BASE_SETBACK_DIST},
+                  id="PropertyLines"),
+     pytest.param("water", "Rhode_Island_Water.tif",
+                  os.path.join(TESTDATADIR, 'setbacks',
+                               'Rhode_Island_Water.gpkg'),
+                  WATER_REGS_FPATH_VALUE,
+                  {"base_setback_dist": BASE_SETBACK_DIST}, id="Water")])
 def test_cli_merged_layers(runner, setbacks_type, out_fn, features_path,
                            regulations_fpath, config_input):
     """
