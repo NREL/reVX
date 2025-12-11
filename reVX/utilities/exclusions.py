@@ -359,10 +359,11 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
                 out = self.compute_local_exclusions(exclusion_value, cnty,
                                                     *args)
                 local_exclusions, slices = out
-                fips = cnty['FIPS'].unique()
+                geometry = cnty.geometry.to_list()
                 exclusions = self._combine_exclusions(exclusions,
                                                       local_exclusions,
-                                                      fips, slices)
+                                                      slices,
+                                                      local_geometry=geometry)
                 logger.debug("Computed exclusions for {:,} counties"
                              .format(ind))
         if exclusions is None:
@@ -378,7 +379,8 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
             exclusion_value, cnty, args = reg
             future = exe.submit(self.compute_local_exclusions,
                                 exclusion_value, cnty, *args)
-            futures[future] = cnty['FIPS'].unique()
+            geometry = cnty.geometry.to_list()
+            futures[future] = geometry
             if ind % max_submissions == 0:
                 exclusions = self._collect_local_futures(futures, exclusions)
         exclusions = self._collect_local_futures(futures, exclusions)
@@ -388,10 +390,11 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         """Collect all futures from the input dictionary. """
         for future in as_completed(futures):
             new_exclusions, slices = future.result()
+            geometry = futures.pop(future)
             exclusions = self._combine_exclusions(exclusions,
                                                   new_exclusions,
-                                                  futures.pop(future),
-                                                  slices=slices)
+                                                  slices=slices,
+                                                  local_geometry=geometry)
             log_mem(logger)
         return exclusions
 
@@ -473,12 +476,13 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         """Merge local exclusions onto the generic exclusions."""
         logger.info('Merging local exclusions onto the generic exclusions')
 
-        local_fips = self.regulations_table["FIPS"].unique()
+        local_geometry = self.regulations_table.geometry.to_list()
         return self._combine_exclusions(generic_exclusions, local_exclusions,
-                                        local_fips, replace_existing=True)
+                                        replace_existing=True,
+                                        local_geometry=local_geometry)
 
-    def _combine_exclusions(self, existing, additional=None, cnty_fips=None,
-                            slices=None, replace_existing=False):
+    def _combine_exclusions(self, existing, additional=None, slices=None,
+                            replace_existing=False, local_geometry=None):
         """Combine local exclusions using FIPS code"""
         if additional is None:
             return existing
@@ -489,10 +493,11 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         if slices is None:
             slices = tuple([slice(None)] * len(existing.shape))
 
-        if cnty_fips is None:
+        if local_geometry is None:
             local_exclusions = slice(None)
         else:
-            local_exclusions = np.isin(self._fips[slices], cnty_fips)
+            local_exclusions = self._geometry_mask(local_geometry, slices,
+                                                   additional.shape)
 
         if replace_existing:
             new_local_exclusions = additional[local_exclusions]
