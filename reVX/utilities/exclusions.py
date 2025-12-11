@@ -145,7 +145,7 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         self._regulations = regulations
         self._features = features
         self._hsds = hsds
-        self._fips = self._profile = None
+        self._profile = None
         self._set_profile()
         self._process_regulations(regulations.df)
 
