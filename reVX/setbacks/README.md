@@ -73,9 +73,11 @@ respectively.  Suitable options for ``log_level`` are ``DEBUG`` (most verbose), 
 ``WARNING`` (only log warnings and errors), and ``ERROR`` (only log errors).
 
 The next important parameter is ``excl_fpath``. This key must be a path that points to a template exclusions file
-(path relative to the project directory are allowed). This file defines the raster grid - it must contain a county
-FIPS layer called ``cnty_fips``. This layer is used to match local regulations in ``regulations_fpath`` to counties
-on the grid.
+(path relative to the project directory are allowed). This file defines the raster grid - it must contain geospatial
+profile information that determines the shape and projection of the output exclusion arrays. If you are providing a
+``regulations_fpath`` input and this input is not a GeoPackage, then the ``excl_fpath`` must contain a county FIPS
+layer called ``cnty_fips``. This layer is then used to match local regulations in ``regulations_fpath`` to counties
+on the grid (using the ``"FIPS"`` column in ``regulations_fpath``).
 
 If you are running setbacks for a particular wind turbine, fill out the ``hub_height`` and ``rotor_diameter`` inputs,
 and **delete the ``base_setback_dist`` input**. ``reVX`` setbacks calculations do not allow ``base_setback_dist`` if the
